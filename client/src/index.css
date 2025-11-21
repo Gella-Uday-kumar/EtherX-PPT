@@ -4,21 +4,25 @@
 @tailwind utilities;
 
 @layer base {
-  /* Theme variables for Dark + Gold palette (Primary Dark, Accent Gold, Text Light) */
+  /* Theme variables for Golden/White and Golden/Black scheme */
   :root {
-    --primary-dark: #1B1A17;
     --accent-gold: #F0A500;
-    --text-light: #FFFFFF;
-    --gold-hover: #d48f00; /* slightly darker for hover states */
+    --gold-hover: #d48f00;
     --panel-radius: 12px;
     --control-radius: 10px;
     --card-shadow: 0 6px 18px rgba(240,165,0,0.06);
   }
 
-  /* Global theme applied to body so all components inherit colors */
+  /* Light mode: Golden + White */
   body {
-    background: var(--primary-dark);
-    color: var(--text-light);
+    background: #ffffff;
+    color: #000000;
+  }
+  
+  /* Dark mode: Golden + Black */
+  .dark body {
+    background: #000000;
+    color: #ffffff;
   }
 
   * {
@@ -38,20 +42,20 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  .dark body {
-    background-color: var(--primary-dark);
-    color: var(--text-light);
+  .dark {
+    background-color: #000000;
+    color: #ffffff;
   }
 }
 
 @layer components {
-  /* Modern Button Styles - adapted to Gold theme */
+  /* Button Styles - Golden theme */
   .btn-primary {
     background: var(--accent-gold);
-    color: var(--primary-dark);
+    color: #000000;
     font-weight: 600;
     padding: 10px 18px;
-    border-radius: 10px; /* per spec */
+    border-radius: 10px;
     transition: all 180ms ease;
     box-shadow: var(--card-shadow);
     display: inline-flex;
@@ -80,21 +84,29 @@
 
   .btn-ghost {
     background: transparent;
-    color: var(--text-light);
+    color: #000000;
     padding: 8px 12px;
     border-radius: 8px;
     transition: all 150ms ease;
   }
 
+  .dark .btn-ghost {
+    color: #ffffff;
+  }
+
   .btn-ghost:hover { transform: scale(1.02); }
 
-  /* Panel / Card Styles - dark panels with subtle gold accents */
+  /* Panel / Card Styles */
   .panel {
-    background: var(--primary-dark);
+    background: #ffffff;
     border: 1px solid rgba(240,165,0,0.12);
     border-radius: var(--panel-radius);
     padding: 18px;
     box-shadow: var(--card-shadow);
+  }
+
+  .dark .panel {
+    background: #000000;
   }
 
   .panel-header {
@@ -103,12 +115,16 @@
 
   /* (panel-header moved above to ensure consistent golden divider look) */
 
-  /* Toolbar styled dark with gold icons */
+  /* Toolbar */
   .toolbar {
-    background: var(--primary-dark);
+    background: #ffffff;
     border-bottom: 1px solid var(--accent-gold);
     padding: 10px 14px;
     display:flex;align-items:center;gap:8px;
+  }
+
+  .dark .toolbar {
+    background: #000000;
   }
 
   .toolbar-group { display:flex;align-items:center;gap:8px;padding:6px 10px;border-right:1px solid rgba(240,165,0,0.06);} 
@@ -139,39 +155,57 @@
   .slide-element:hover { transform: translateZ(0) scale(1.01); }
   .slide-element.selected { outline: 2px dashed rgba(240,165,0,0.9); box-shadow: 0 8px 20px rgba(240,165,0,0.08); }
 
-  /* Input Fields - transparent with gold borders */
+  /* Input Fields */
   .form-input {
-    width:100%; padding:10px 12px; font-size:0.95rem; border-radius: var(--control-radius); background: transparent; border: 1px solid var(--accent-gold); color: var(--text-light); transition: all 140ms ease;
+    width:100%; padding:10px 12px; font-size:0.95rem; border-radius: var(--control-radius); background: #ffffff; border: 1px solid var(--accent-gold); color: #000000; transition: all 140ms ease;
+  }
+
+  .dark .form-input {
+    background: #000000;
+    color: #ffffff;
   }
 
   .form-input::placeholder { color: rgba(240,165,0,0.6); }
 
   .form-input:focus { box-shadow: 0 6px 18px rgba(240,165,0,0.08); outline: none; transform: translateY(-1px); }
 
-  .form-select { width:100%; padding:10px 12px; border-radius: var(--control-radius); border:1px solid var(--accent-gold); background: transparent; color: var(--text-light); }
+  .form-select { width:100%; padding:10px 12px; border-radius: var(--control-radius); border:1px solid var(--accent-gold); background: #ffffff; color: #000000; }
+
+  .dark .form-select { background: #000000; color: #ffffff; }
 
   /* Dropdowns / Menus */
-  .dropdown-menu { position:absolute; background: var(--primary-dark); border:1px solid rgba(240,165,0,0.08); border-radius: 12px; padding:6px; z-index:50; }
-  .dropdown-item { display:flex; align-items:center; gap:10px; padding:8px 12px; color:var(--text-light); border-radius:8px; }
-  .dropdown-item:hover { background: rgba(240,165,0,0.06); color: var(--primary-dark); }
+  .dropdown-menu { position:absolute; background: #ffffff; border:1px solid rgba(240,165,0,0.08); border-radius: 12px; padding:6px; z-index:50; }
+  .dropdown-item { display:flex; align-items:center; gap:10px; padding:8px 12px; color:#000000; border-radius:8px; }
+  .dropdown-item:hover { background: rgba(240,165,0,0.06); }
+
+  .dark .dropdown-menu { background: #000000; }
+  .dark .dropdown-item { color: #ffffff; }
 
   /* Sidebar */
-  .sidebar { width: 260px; background: var(--primary-dark); border-right: 1px solid rgba(240,165,0,0.06); display:flex;flex-direction:column;padding:12px; }
+  .sidebar { width: 260px; background: #ffffff; border-right: 1px solid rgba(240,165,0,0.06); display:flex;flex-direction:column;padding:12px; }
+
+  .dark .sidebar { background: #000000; }
 
   .sidebar .slide-thumbnail { border: 1px solid var(--accent-gold); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); padding:6px; transition: all 140ms ease; }
   .sidebar .slide-thumbnail:hover { transform: scale(1.02); box-shadow: 0 10px 24px rgba(240,165,0,0.04); }
   .sidebar .slide-thumbnail.selected { background: var(--accent-gold); color: var(--primary-dark); border-color: var(--accent-gold); }
 
   /* Status Bar */
-  .status-bar { background: transparent; border-top:1px solid rgba(240,165,0,0.04); padding:8px 12px; color:var(--text-light); }
+  .status-bar { background: #ffffff; border-top:1px solid rgba(240,165,0,0.04); padding:8px 12px; color:#000000; }
+
+  .dark .status-bar { background: #000000; color: #ffffff; }
 
   /* Navbar */
-  .navbar { background: var(--primary-dark); color: var(--accent-gold); border-bottom: 1px solid var(--accent-gold); padding: 12px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .navbar { background: #ffffff; color: var(--accent-gold); border-bottom: 1px solid var(--accent-gold); padding: 12px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .navbar .nav-title { color: var(--accent-gold); font-weight:700; font-size:1.05rem; }
   .navbar a, .navbar button { color: var(--accent-gold); }
 
+  .dark .navbar { background: #000000; }
+
   /* Modal styling */
-  .modal { background: rgba(27,26,23,0.85); border:1px solid var(--accent-gold); border-radius: 12px; color: var(--text-light); padding: 18px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+  .modal { background: #ffffff; border:1px solid var(--accent-gold); border-radius: 12px; color: #000000; padding: 18px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+
+  .dark .modal { background: #000000; color: #ffffff; }
   .modal .modal-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
   .modal .modal-footer { display:flex;gap:8px;justify-content:flex-end;margin-top:14px; }
 

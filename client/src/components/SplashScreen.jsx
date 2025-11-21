@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
-import logo from '../assets/icons/DOCS-LOGO-final-transparent.png';
+import { useTheme } from '../contexts/ThemeContext';
 
-// Clean, minimal SplashScreen showing only logo, title, and tagline
 function SplashScreen({ onLoadingComplete }) {
   const [isVisible, setIsVisible] = useState(true);
+  const { isDark } = useTheme();
 
   useEffect(() => {
-    // Keep splash briefly for brand visibility, then proceed
     const timer = setTimeout(() => {
       setIsVisible(false);
       if (typeof onLoadingComplete === 'function') onLoadingComplete();
-    }, 1200);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onLoadingComplete]);
@@ -19,27 +18,23 @@ function SplashScreen({ onLoadingComplete }) {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center p-8 z-50 transition-opacity duration-500 ${
+      className={`fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-500 ${
         isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
-      style={{ background: 'var(--primary-dark)' }}
+      } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
     >
       <div className="flex flex-col items-center text-center">
-        {/* Company Logo - prominent */}
         <img
-          src={logo}
+          src="/DOCS-LOGO-final-transparent.png"
           alt="Company logo"
-          className="w-28 h-28 md:w-32 md:h-32 mb-4 object-contain"
+          className="w-24 h-24 mb-6 object-contain"
         />
 
-        {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-2" style={{ color: 'var(--accent-gold)' }}>
-          Etherx PPT
+        <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          EtherX PPT
         </h1>
 
-        {/* Tagline under title */}
-        <p className="text-base md:text-lg text-white/70">
-          where vision meets reality
+        <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+          Professional Presentations Made Simple
         </p>
       </div>
     </div>

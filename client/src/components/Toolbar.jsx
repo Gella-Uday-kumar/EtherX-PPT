@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
 import { saveToLocal } from '../utils/cloudStorage';
 import PresentationManager from './PresentationManager';
+import { RiFolderLine, RiLayoutLine, RiPlayLine } from 'react-icons/ri';
 
 const Toolbar = ({ activePanel, setActivePanel }) => {
   const { slides, addSlide, undo, redo } = usePresentation();
@@ -41,11 +42,7 @@ const Toolbar = ({ activePanel, setActivePanel }) => {
             title="Manage Presentations"
             variant="secondary"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 1v6" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 1v6" />
-            </svg>
+            <RiFolderLine className="w-4 h-4" />
             Manage
           </ToolbarButton>
           <ToolbarButton
@@ -110,9 +107,7 @@ const Toolbar = ({ activePanel, setActivePanel }) => {
             active={activePanel === 'layout'}
             title="Layout Panel"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-            </svg>
+            <RiLayoutLine className="w-4 h-4" />
             Layout
           </ToolbarButton>
         </div>

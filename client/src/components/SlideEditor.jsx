@@ -3,6 +3,7 @@ import { usePresentation } from '../contexts/PresentationContext';
 import ChartComponent from './ChartComponent';
 import TableComponent from './TableComponent';
 import HeaderFooterModal from './HeaderFooterModal';
+import { RiCloseLine } from 'react-icons/ri';
 
 const SlideEditor = () => {
   const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta } = usePresentation();
@@ -63,7 +64,7 @@ const SlideEditor = () => {
     const newElement = {
       id: Date.now(),
       type: 'textbox',
-      content: 'New text box',
+      content: 'Click to edit text',
       x: 100,
       y: 100,
       width: 200,
@@ -71,11 +72,22 @@ const SlideEditor = () => {
       fontSize: 16,
       fontFamily: 'Arial',
       color: '#000000',
-      backgroundColor: 'transparent'
+      backgroundColor: 'transparent',
+      isEditing: true
     };
     
     const elements = slide.elements || [];
     updateSlide(currentSlide, { elements: [...elements, newElement] });
+    setSelectedElement(newElement.id);
+    
+    // Focus the text box after a short delay
+    setTimeout(() => {
+      const textElement = document.querySelector(`[data-element-id="${newElement.id}"] [contenteditable]`);
+      if (textElement) {
+        textElement.focus();
+        textElement.select();
+      }
+    }, 100);
   };
 
   const handleImageUpload = (event) => {
@@ -495,6 +507,7 @@ const SlideEditor = () => {
             {(slide.elements || []).map((element) => (
               <div
                 key={element.id}
+                data-element-id={element.id}
                 className={`slide-element ${
                   selectedElement === element.id ? 'selected' : ''
                 }`}
@@ -520,8 +533,29 @@ const SlideEditor = () => {
                 <div
                   contentEditable
                   suppressContentEditableWarning={true}
-                  onBlur={(e) => updateElement(element.id, { content: e.target.innerHTML })}
-                  className="w-full h-full outline-none p-1"
+                  onBlur={(e) => updateElement(element.id, { content: e.target.innerHTML, isEditing: false })}
+                  onFocus={() => updateElement(element.id, { isEditing: true })}
+                  onPaste={(e) => {
+                    // Handle image paste
+                    const items = e.clipboardData.items;
+                    for (let item of items) {
+                      if (item.type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        const file = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          updateElement(element.id, { 
+                            type: 'image',
+                            src: event.target.result,
+                            content: undefined
+                          });
+                        };
+                        reader.readAsDataURL(file);
+                        break;
+                      }
+                    }
+                  }}
+                  className="w-full h-full outline-none p-1 cursor-text"
                   dangerouslySetInnerHTML={{ __html: element.content }}
                 />
               )}
@@ -603,13 +637,27 @@ const SlideEditor = () => {
               )}
               
               {element.type === 'table' && (
-                <div className="w-full h-full overflow-hidden">
-                  <table className="w-full h-full text-xs border-collapse">
+                <div className="w-full h-full overflow-hidden relative">
+                  <table className="w-full h-full text-xs border-collapse" style={{ borderColor: element.borderColor || '#d1d5db' }}>
                     <tbody>
                       {element.data.map((row, i) => (
                         <tr key={i}>
                           {row.map((cell, j) => (
-                            <td key={j} className="border border-gray-300 p-1 truncate">
+                            <td 
+                              key={j} 
+                              className="border p-1"
+                              style={{ 
+                                borderColor: element.borderColor || '#d1d5db',
+                                backgroundColor: element.cellColors?.[i]?.[j] || element.backgroundColor || 'transparent'
+                              }}
+                              contentEditable
+                              suppressContentEditableWarning={true}
+                              onBlur={(e) => {
+                                const newData = [...element.data];
+                                newData[i][j] = e.target.textContent;
+                                updateElement(element.id, { data: newData });
+                              }}
+                            >
                               {cell || `${i + 1},${j + 1}`}
                             </td>
                           ))}
@@ -617,6 +665,24 @@ const SlideEditor = () => {
                       ))}
                     </tbody>
                   </table>
+                  {selectedElement === element.id && (
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <input
+                        type="color"
+                        value={element.borderColor || '#d1d5db'}
+                        onChange={(e) => updateElement(element.id, { borderColor: e.target.value })}
+                        className="w-6 h-6 rounded cursor-pointer"
+                        title="Border Color"
+                      />
+                      <input
+                        type="color"
+                        value={element.backgroundColor || '#ffffff'}
+                        onChange={(e) => updateElement(element.id, { backgroundColor: e.target.value })}
+                        className="w-6 h-6 rounded cursor-pointer"
+                        title="Background Color"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -630,9 +696,7 @@ const SlideEditor = () => {
                       }}
                       className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <RiCloseLine className="w-4 h-4" />
                     </button>
                     
                     {/* Resize Handles */}

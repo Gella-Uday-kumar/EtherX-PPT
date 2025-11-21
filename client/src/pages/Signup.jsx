@@ -27,7 +27,11 @@ const Signup = () => {
     setLoading(true);
     
     setTimeout(() => {
-      login({ token: 'demo-token', email: formData.email });
+      login({ 
+        token: 'demo-token', 
+        email: formData.email, 
+        name: `${formData.firstName} ${formData.lastName}`.trim() 
+      });
       navigate('/dashboard');
       setLoading(false);
     }, 1000);

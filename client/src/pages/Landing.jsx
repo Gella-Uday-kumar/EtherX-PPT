@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { RiFileAddLine, RiStarLine, RiHistoryLine } from 'react-icons/ri';
 
 const Landing = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -40,15 +41,9 @@ const Landing = () => {
               )}
             </button>
 
-            <Link to="/login" className="px-4 py-2 rounded-md font-medium border"
+            <Link to="/login" className="btn-secondary"
               onClick={() => {
-                // Mark returning user flow
                 localStorage.setItem('authFlow', 'login');
-              }}
-              style={{
-                color: isDark ? '#f3f4f6' : '#000000',
-                borderColor: isDark ? 'rgba(255,255,255,0.24)' : '#111827',
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'transparent'
               }}
             >
               Login
@@ -56,15 +51,9 @@ const Landing = () => {
             <Link
               to="/signup"
               onClick={() => {
-                // Mark first-time user flow (Sign In experience)
                 localStorage.setItem('authFlow', 'signin');
               }}
-              className="px-4 py-2 rounded-md font-semibold shadow-sm"
-              style={{
-                background: 'linear-gradient(90deg, var(--accent-gold), var(--gold-hover))',
-                color: '#111',
-                border: '1px solid rgba(0,0,0,0.25)'
-              }}
+              className="btn-secondary"
             >
               Sign Up
             </Link>
@@ -75,11 +64,11 @@ const Landing = () => {
       {/* Hero Section */}
       <main className="container mx-auto px-6 py-20">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in nav-title">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in" style={{ color: '#F0A500' }}>
             Create Amazing
-            <span className="text-white"> Presentations</span>
+            <span className={isDark ? 'text-white' : 'text-black'}> Presentations</span>
           </h1>
-          <p className="text-xl text-neutral-300 mb-8 animate-slide-in-up">
+          <p className={`text-xl mb-8 animate-slide-in-up ${isDark ? 'text-white' : 'text-black'}`}>
             Professional PowerPoint-like editor with real-time collaboration, 
             modern design tools, and seamless workflow.
           </p>
@@ -87,9 +76,15 @@ const Landing = () => {
             <Link to="/signup" className="btn-primary text-lg px-8 py-3">
               Get Started Free
             </Link>
-            <Link to="/dashboard" className="btn-secondary text-lg px-8 py-3">
+            <button 
+              onClick={() => {
+                localStorage.setItem('authFlow', 'demo');
+                navigate('/dashboard');
+              }}
+              className="btn-secondary text-lg px-8 py-3"
+            >
               Try Demo
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -100,10 +95,10 @@ const Landing = () => {
             className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
-              <span className="text-2xl">🆕</span>
+              <RiFileAddLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className="text-xl font-semibold mb-2 dark:text-white">New Presentation</h3>
-            <p className="text-neutral-300">Create and open a new presentation instantly.</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>New Presentation</h3>
+            <p className={isDark ? 'text-white' : 'text-black'}>Create and open a new presentation instantly.</p>
           </button>
           
           <button
@@ -115,10 +110,10 @@ const Landing = () => {
             title={user ? 'View your favourites' : 'Login required'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
-              <span className="text-2xl">⭐</span>
+              <RiStarLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className="text-xl font-semibold mb-2 dark:text-white">Favourites</h3>
-            <p className="text-neutral-300">{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Favourites</h3>
+            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
           </button>
           
           <button
@@ -130,10 +125,10 @@ const Landing = () => {
             title={user ? 'View your history' : 'Login required'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
-              <span className="text-2xl">🕘</span>
+              <RiHistoryLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className="text-xl font-semibold mb-2 dark:text-white">History</h3>
-            <p className="text-neutral-300">{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>History</h3>
+            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
           </button>
         </div>
 
@@ -143,20 +138,20 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="py-12 mt-20">
-        <div className="container mx-auto px-6 text-center text-neutral-300">
+        <div className={`container mx-auto px-6 text-center ${isDark ? 'text-white' : 'text-black'}`}>
           <div className="flex items-center justify-center space-x-2 mb-4">
             <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
             <span className="text-2xl font-bold nav-title">EtherXPPT</span>
           </div>
           <p className="mb-4">Professional presentation software for modern teams</p>
           <div className="flex justify-center space-x-6">
-            <Link to="/login" className="text-neutral-300 hover:text-white">Login</Link>
-            <Link to="/signup" className="text-neutral-300 hover:text-white">Sign Up</Link>
-            <a href="#" className="text-neutral-300 hover:text-white">Documentation</a>
-            <a href="#" className="text-neutral-300 hover:text-white">Support</a>
+            <Link to="/login" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Login</Link>
+            <Link to="/signup" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Sign Up</Link>
+            <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Documentation</a>
+            <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Support</a>
           </div>
           <div className="mt-8 pt-8 border-t border-transparent">
-            <p className="text-neutral-400">© 2025 EtherXPPT. All rights reserved.</p>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>© 2025 EtherXPPT. All rights reserved.</p>
           </div>
         </div>
       </footer>

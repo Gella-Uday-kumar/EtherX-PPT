@@ -17,8 +17,8 @@ const AddInsPanel = () => {
       y: 150,
       width: 100,
       height: 100,
-      fill: '#3B82F6',
-      stroke: '#1E40AF',
+      fill: '#F0A500',
+      stroke: '#d48f00',
       strokeWidth: 2
     };
     
@@ -28,12 +28,9 @@ const AddInsPanel = () => {
 
   const addIcon = (iconType) => {
     const icons = {
-      star: '⭐',
-      heart: '❤️',
-      check: '✅',
-      arrow: '➡️',
-      warning: '⚠️',
-      info: 'ℹ️'
+      star: '⭐', heart: '❤️', check: '✅', arrow: '➡️', warning: '⚠️', info: 'ℹ️',
+      home: '🏠', phone: '📞', email: '📧', user: '👤', settings: '⚙️', search: '🔍',
+      calendar: '📅', clock: '🕐', location: '📍', camera: '📷', music: '🎵', video: '🎥'
     };
 
     const newElement = {
@@ -97,49 +94,57 @@ const AddInsPanel = () => {
 
           {/* Shapes */}
           <div>
-            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Shapes</h4>
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Basic Shapes</h4>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <button onClick={() => addShape('rectangle')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Rectangle">⬜</button>
+              <button onClick={() => addShape('circle')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Circle">⭕</button>
+              <button onClick={() => addShape('triangle')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Triangle">🔺</button>
+              <button onClick={() => addShape('diamond')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Diamond">💎</button>
+              <button onClick={() => addShape('pentagon')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Pentagon">⬟</button>
+              <button onClick={() => addShape('hexagon')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Hexagon">⬡</button>
+            </div>
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Flowchart</h4>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <button onClick={() => addShape('process')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Process">▭</button>
+              <button onClick={() => addShape('decision')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Decision">◇</button>
+              <button onClick={() => addShape('start')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Start/End">⬭</button>
+            </div>
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">3D Shapes</h4>
             <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => addShape('rectangle')}
-                className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs"
-                title="Rectangle"
-              >
-                ⬜
-              </button>
-              <button
-                onClick={() => addShape('circle')}
-                className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs"
-                title="Circle"
-              >
-                ⭕
-              </button>
-              <button
-                onClick={() => addShape('triangle')}
-                className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs"
-                title="Triangle"
-              >
-                🔺
-              </button>
+              <button onClick={() => addShape('cube')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Cube">🧊</button>
+              <button onClick={() => addShape('sphere')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Sphere">🔮</button>
+              <button onClick={() => addShape('cylinder')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Cylinder">🥫</button>
+              <button onClick={() => addShape('cone')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Cone">🔺</button>
+              <button onClick={() => addShape('pyramid')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Pyramid">🔻</button>
+              <button onClick={() => addShape('torus')} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-xs" title="Torus">🍩</button>
             </div>
           </div>
 
           {/* Icons */}
           <div>
-            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Icons</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {['star', 'heart', 'check', 'arrow', 'warning', 'info'].map((icon) => (
-                <button
-                  key={icon}
-                  onClick={() => addIcon(icon)}
-                  className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-lg"
-                  title={icon}
-                >
-                  {icon === 'star' && '⭐'}
-                  {icon === 'heart' && '❤️'}
-                  {icon === 'check' && '✅'}
-                  {icon === 'arrow' && '➡️'}
-                  {icon === 'warning' && '⚠️'}
-                  {icon === 'info' && 'ℹ️'}
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Basic Icons</h4>
+            <div className="grid grid-cols-4 gap-1 mb-3">
+              {['star', 'heart', 'check', 'arrow', 'warning', 'info', 'home', 'phone'].map((icon) => (
+                <button key={icon} onClick={() => addIcon(icon)} className="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-sm" title={icon}>
+                  {icon === 'star' && '⭐'}{icon === 'heart' && '❤️'}{icon === 'check' && '✅'}{icon === 'arrow' && '➡️'}
+                  {icon === 'warning' && '⚠️'}{icon === 'info' && 'ℹ️'}{icon === 'home' && '🏠'}{icon === 'phone' && '📞'}
+                </button>
+              ))}
+            </div>
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Communication</h4>
+            <div className="grid grid-cols-4 gap-1 mb-3">
+              {['email', 'user', 'settings', 'search'].map((icon) => (
+                <button key={icon} onClick={() => addIcon(icon)} className="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-sm" title={icon}>
+                  {icon === 'email' && '📧'}{icon === 'user' && '👤'}{icon === 'settings' && '⚙️'}{icon === 'search' && '🔍'}
+                </button>
+              ))}
+            </div>
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Media & Time</h4>
+            <div className="grid grid-cols-4 gap-1">
+              {['calendar', 'clock', 'location', 'camera', 'music', 'video'].map((icon) => (
+                <button key={icon} onClick={() => addIcon(icon)} className="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-sm" title={icon}>
+                  {icon === 'calendar' && '📅'}{icon === 'clock' && '🕐'}{icon === 'location' && '📍'}
+                  {icon === 'camera' && '📷'}{icon === 'music' && '🎵'}{icon === 'video' && '🎥'}
                 </button>
               ))}
             </div>

@@ -26,11 +26,11 @@ function App() {
 
   return (
     <div className="App">
-      {showSplash && <SplashScreen onLoadingComplete={handleLoadingComplete} />}
-      
-      {!showSplash && (
-        <AuthProvider>
-          <ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          {showSplash && <SplashScreen onLoadingComplete={handleLoadingComplete} />}
+          
+          {!showSplash && (
             <CollaborationProvider>
               <CloudProvider>
                 <PresentationProvider>
@@ -78,9 +78,9 @@ function App() {
                 </PresentationProvider>
               </CloudProvider>
             </CollaborationProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      )}
+          )}
+        </ThemeProvider>
+      </AuthProvider>
     </div>
   );
 }

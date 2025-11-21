@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePresentation } from '../contexts/PresentationContext';
+import { RiFileAddLine, RiStarLine, RiHistoryLine, RiTextWrap, RiImageLine, RiBarChartLine, RiTableLine, RiEmotionLine, RiVideoLine, RiMusicLine, RiPaletteLine, RiSettings3Line, RiLayoutLine, RiRulerLine, RiBrushLine, RiFolderLine, RiPlayLine, RiCloseLine } from 'react-icons/ri';
 import Toolbar from '../components/Toolbar';
 import Sidebar from '../components/Sidebar';
 import SlideEditor from '../components/SlideEditor';
@@ -26,12 +27,13 @@ import HeaderFooterModal from '../components/HeaderFooterModal';
 import ChartComponent from '../components/ChartComponent';
 import TableComponent from '../components/TableComponent';
 import ThemePresetPicker from '../components/ThemePresetPicker';
-import CloudSync from '../components/CloudSync';
-import AdvancedExport from '../components/AdvancedExport';
+import ImportMenu from '../components/ImportMenu';
+import ExportMenu from '../components/ExportMenu';
 import InteractiveElements from '../components/InteractiveElements';
 import MobileView from '../components/MobileView';
 import VersionHistory from '../components/VersionHistory';
-import { exportToJSON } from '../utils/exportUtils';
+import { exportToJSON, exportPresentation } from '../utils/exportUtils';
+import { handleFileImport } from '../utils/importUtils';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -53,8 +55,8 @@ const Dashboard = () => {
   const [showHeaderFooter, setShowHeaderFooter] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const [showCloudSync, setShowCloudSync] = useState(false);
-  const [showAdvancedExport, setShowAdvancedExport] = useState(false);
+  const [showImportMenu, setShowImportMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showInteractiveElements, setShowInteractiveElements] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showFavourites, setShowFavourites] = useState(false);
@@ -63,7 +65,42 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Load persisted authFlow when component mounts
-    setAuthFlow(localStorage.getItem('authFlow') || 'login');
+    const flow = localStorage.getItem('authFlow') || 'login';
+    setAuthFlow(flow);
+    
+    // Load demo presentation if in demo mode
+    if (flow === 'demo') {
+      const demoSlides = [
+        {
+          id: 1,
+          title: 'Welcome to EtherX PPT Demo',
+          content: 'This is a sample presentation to showcase our features. Try editing this text!',
+          background: '#ffffff',
+          textColor: '#000000',
+          layout: 'title-content',
+          elements: []
+        },
+        {
+          id: 2,
+          title: 'Key Features',
+          content: '• Rich text editing\n• Drag & drop elements\n• Multiple export formats\n• Professional templates',
+          background: '#f8fafc',
+          textColor: '#1f2937',
+          layout: 'title-content',
+          elements: []
+        },
+        {
+          id: 3,
+          title: 'Get Started',
+          content: 'Click anywhere to edit text, use the toolbar to add elements, and explore all the features!',
+          background: '#fff7ed',
+          textColor: '#9a3412',
+          layout: 'title-content',
+          elements: []
+        }
+      ];
+      setSlides(demoSlides);
+    }
 
     const handleStartSlideshow = () => setIsSlideshow(true);
     const handleExitSlideshow = () => setIsSlideshow(false);
@@ -117,8 +154,9 @@ const Dashboard = () => {
               </span>
             </div>
             
-            {/* Navigation Menu */}
+            {/* Navigation Menu - simplified for signin flow */}
             <nav className="flex items-center space-x-1">
+              {authFlow !== 'signin' && (
               <DropdownMenu label="File" align="left">
                 <DropdownItem onSelect={() => {
                   if (confirm('Start a new presentation? Unsaved changes will be lost.')) {
@@ -128,7 +166,7 @@ const Dashboard = () => {
                   }
                 }}>
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    <RiFileAddLine className="w-4 h-4" />
                     New
                   </div>
                 </DropdownItem>
@@ -178,10 +216,14 @@ const Dashboard = () => {
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowRecentPresentations(true)}>
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <RiHistoryLine className="w-4 h-4" />
                     Recent Presentations
+                  </div>
+                </DropdownItem>
+                <DropdownItem onSelect={() => setShowFavourites(true)}>
+                  <div className="flex items-center gap-2">
+                    <RiStarLine className="w-4 h-4" />
+                    Favorites
                   </div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowSearchPresentations(true)}>
@@ -193,6 +235,7 @@ const Dashboard = () => {
                   </div>
                 </DropdownItem>
               </DropdownMenu>
+              )}
               
               <button 
                 onClick={() => navigate('/')}
@@ -201,13 +244,14 @@ const Dashboard = () => {
                 Home
               </button>
               
+              {authFlow !== 'signin' && (
               <DropdownMenu label="Insert" align="left">
                 <DropdownItem onSelect={() => {
                   const el = { id: Date.now(), type: 'textbox', content: 'New text', x: 100, y: 100, width: 240, height: 60, fontSize: 18, fontFamily: 'Arial', color: '#000', backgroundColor: 'transparent' };
                   const elems = slides[currentSlide]?.elements || [];
                   updateSlide(currentSlide, { elements: [...elems, el] });
                 }}>
-                  <div className="flex items-center gap-2">🅣 Text Box</div>
+                  <div className="flex items-center gap-2"><RiTextWrap className="w-4 h-4" /> Text Box</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const url = prompt('Image URL:');
@@ -217,27 +261,27 @@ const Dashboard = () => {
                     updateSlide(currentSlide, { elements: [...elems, el] });
                   }
                 }}>
-                  <div className="flex items-center gap-2">🖼️ Image (URL)</div>
+                  <div className="flex items-center gap-2"><RiImageLine className="w-4 h-4" /> Image (URL)</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowInsertChart(true)}>
-                  <div className="flex items-center gap-2">📊 Chart</div>
+                  <div className="flex items-center gap-2"><RiBarChartLine className="w-4 h-4" /> Chart</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowInsertTable(true)}>
-                  <div className="flex items-center gap-2">📋 Table</div>
+                  <div className="flex items-center gap-2"><RiTableLine className="w-4 h-4" /> Table</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const el = { id: Date.now(), type: 'icon', content: '⭐', x: 260, y: 200, width: 48, height: 48, fontSize: 32 };
                   const elems = slides[currentSlide]?.elements || [];
                   updateSlide(currentSlide, { elements: [...elems, el] });
                 }}>
-                  <div className="flex items-center gap-2">🔣 Icon</div>
+                  <div className="flex items-center gap-2"><RiEmotionLine className="w-4 h-4" /> Icon</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const el = { id: Date.now(), type: 'textbox', content: '<i>E = mc^2</i>', x: 180, y: 220, width: 180, height: 50, fontSize: 20, fontFamily: 'Times New Roman', color: '#111' };
                   const elems = slides[currentSlide]?.elements || [];
                   updateSlide(currentSlide, { elements: [...elems, el] });
                 }}>
-                  <div className="flex items-center gap-2">∑ Equation</div>
+                  <div className="flex items-center gap-2"><RiSettings3Line className="w-4 h-4" /> Equation</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const url = prompt('Video URL (mp4/webm):');
@@ -247,7 +291,7 @@ const Dashboard = () => {
                     updateSlide(currentSlide, { elements: [...elems, el] });
                   }
                 }}>
-                  <div className="flex items-center gap-2">🎞️ Video</div>
+                  <div className="flex items-center gap-2"><RiVideoLine className="w-4 h-4" /> Video</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const url = prompt('Audio URL (mp3/ogg):');
@@ -257,102 +301,132 @@ const Dashboard = () => {
                     updateSlide(currentSlide, { elements: [...elems, el] });
                   }
                 }}>
-                  <div className="flex items-center gap-2">🎵 Audio</div>
+                  <div className="flex items-center gap-2"><RiMusicLine className="w-4 h-4" /> Audio</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const el = { id: Date.now(), type: 'textbox', content: '<span style=\"font-weight:800;text-shadow:0 2px 6px rgba(0,0,0,0.3)\">WordArt</span>', x: 160, y: 180, width: 280, height: 80, fontSize: 28, fontFamily: 'Georgia', color: '#111', backgroundColor: 'transparent' };
                   const elems = slides[currentSlide]?.elements || [];
                   updateSlide(currentSlide, { elements: [...elems, el] });
                 }}>
-                  <div className="flex items-center gap-2">🅆 WordArt</div>
+                  <div className="flex items-center gap-2"><RiTextWrap className="w-4 h-4" /> WordArt</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const el = { id: Date.now(), type: 'shape', shapeType: 'rectangle', fill: '#F0A500', stroke: '#8a6d00', strokeWidth: 2, x: 200, y: 220, width: 160, height: 100 };
                   const elems = slides[currentSlide]?.elements || [];
                   updateSlide(currentSlide, { elements: [...elems, el] });
                 }}>
-                  <div className="flex items-center gap-2">⬛ Rectangle</div>
+                  <div className="flex items-center gap-2"><RiLayoutLine className="w-4 h-4" /> Rectangle</div>
                 </DropdownItem>
               </DropdownMenu>
+              )}
               
+              {authFlow !== 'signin' && (
               <DropdownMenu label="Design" align="left">
                 <DropdownItem onSelect={() => setShowTemplateLibrary(true)}>
-                  <div className="flex items-center gap-2">🎨 Templates</div>
+                  <div className="flex items-center gap-2"><RiPaletteLine className="w-4 h-4" /> Templates</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowThemePicker(true)}>
-                  <div className="flex items-center gap-2">🎚️ Theme Presets</div>
+                  <div className="flex items-center gap-2"><RiSettings3Line className="w-4 h-4" /> Theme Presets</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowHeaderFooter(true)}>
-                  <div className="flex items-center gap-2">🧾 Header & Footer</div>
+                  <div className="flex items-center gap-2"><RiLayoutLine className="w-4 h-4" /> Header & Footer</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const next = presentationMeta.slideSize === '16:9' ? '4:3' : '16:9';
                   setPresentationMeta({ ...presentationMeta, slideSize: next, updatedAt: new Date().toISOString() });
                 }}>
-                  <div className="flex items-center gap-2">📐 Toggle Slide Size (Current: {presentationMeta.slideSize})</div>
+                  <div className="flex items-center gap-2"><RiRulerLine className="w-4 h-4" /> Toggle Slide Size (Current: {presentationMeta.slideSize})</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
                   const color = prompt('Slide background color (hex):', slides[currentSlide]?.background || '#ffffff');
                   if (color) updateSlide(currentSlide, { background: color });
                 }}>
-                  <div className="flex items-center gap-2">🖌️ Format Background</div>
+                  <div className="flex items-center gap-2"><RiBrushLine className="w-4 h-4" /> Format Background</div>
                 </DropdownItem>
               </DropdownMenu>
+              )}
               
+              {authFlow !== 'signin' && (
               <button 
                 onClick={() => setActivePanel(activePanel === 'animations' ? null : 'animations')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 ${
                   activePanel === 'animations' 
                     ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' 
                     : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                 }`}
               >
+                <RiPlayLine className="w-4 h-4" />
                 Animations
               </button>
+              )}
               
-              {/* Slideshow removed per simplification */}
-              
+              {authFlow !== 'signin' && (
               <button 
                 onClick={() => setShowPresenterMode(true)}
                 className="px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-all duration-200"
               >
                 Presenter
               </button>
+              )}
               
-              <button 
-                onClick={() => setShowAIAssistant(true)}
-                className="px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900 rounded-lg transition-all duration-200 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                AI Assistant
-              </button>
+
             </nav>
           </div>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1">
-              <button
-                onClick={() => setShowCloudSync(true)}
-                className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200"
-                title="Cloud Sync"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowImportMenu(!showImportMenu)}
+                  className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200"
+                  title="Import"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                </button>
+                <ImportMenu 
+                  isOpen={showImportMenu}
+                  onClose={() => setShowImportMenu(false)}
+                  onImport={async (file, fileType) => {
+                    try {
+                      const importedSlides = await handleFileImport(file, fileType);
+                      setSlides([...slides, ...importedSlides]);
+                      console.log('Successfully imported:', file.name);
+                    } catch (error) {
+                      console.error('Import failed:', error);
+                      alert('Import failed: ' + error.message);
+                    }
+                  }}
+                />
+              </div>
               
-              <button
-                onClick={() => setShowAdvancedExport(true)}
-                className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200"
-                title="Advanced Export"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200"
+                  title="Export"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </button>
+                <ExportMenu 
+                  isOpen={showExportMenu}
+                  onClose={() => setShowExportMenu(false)}
+                  onExport={async (format) => {
+                    try {
+                      const filename = presentationMeta.title || 'presentation';
+                      await exportPresentation(slides, format, filename);
+                      console.log('Successfully exported as:', format);
+                    } catch (error) {
+                      console.error('Export failed:', error);
+                      alert('Export failed: ' + error.message);
+                    }
+                  }}
+                />
+              </div>
               
               <button
                 onClick={() => setShowSearchPresentations(true)}
@@ -364,7 +438,21 @@ const Dashboard = () => {
                 </svg>
               </button>
               
-              {/* Theme toggle hidden per requirement; functionality remains via context */}
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200"
+                title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              >
+                {isDark ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
             </div>
             
             <div className="h-6 w-px bg-neutral-300 dark:bg-neutral-700 mx-2"></div>
@@ -372,31 +460,54 @@ const Dashboard = () => {
             {/* User Menu */}
             <div className="flex items-center space-x-3">
               <DropdownMenu
-                label={<div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-medium">{(user?.name || 'U').charAt(0).toUpperCase()}</div>}
+                label={
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium" style={{ backgroundColor: '#F0A500' }}>
+                      {(user?.name || user?.email || 'User').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">{user?.name || 'User'}</div>
+                      <div className="text-xs opacity-75">{user?.email || 'user@example.com'}</div>
+                    </div>
+                  </div>
+                }
                 align="right"
               >
-                <div className="px-3 py-2 border-b border-[rgba(240,165,0,0.08)]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-medium">{(user?.name || 'U').charAt(0).toUpperCase()}</div>
+                <div className="px-3 py-2 border-b" style={{ borderColor: 'rgba(240,165,0,0.08)' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-medium" style={{ backgroundColor: '#F0A500' }}>
+                      {(user?.name || user?.email || 'User').charAt(0).toUpperCase()}
+                    </div>
                     <div>
                       <div className="text-sm font-semibold">{user?.name || 'User'}</div>
-                      <div className="text-xs text-neutral-400">{user?.email || 'user@example.com'}</div>
+                      <div className="text-xs opacity-75">{user?.email || 'user@example.com'}</div>
                     </div>
                   </div>
                 </div>
-                <DropdownItem onSelect={() => navigate('/profile')}>Custom Profile</DropdownItem>
-                <DropdownItem onSelect={() => navigate('/change-password')}>Change Password</DropdownItem>
-                <DropdownItem onSelect={() => navigate('/wallet')}>Wallet</DropdownItem>
-                <DropdownSeparator />
-                <DropdownItem onSelect={() => { try { localStorage.removeItem('authFlow'); } catch {} logout(); }}>Logout</DropdownItem>
+                
+                <div className="py-1">
+                  <DropdownItem onSelect={() => navigate('/profile')}>Custom Profile</DropdownItem>
+                  <DropdownItem onSelect={() => navigate('/change-password')}>Change Password</DropdownItem>
+                </div>
+                
+                <div className="py-1 border-t" style={{ borderColor: 'rgba(240,165,0,0.08)' }}>
+                  <DropdownItem onSelect={() => { 
+                    try { 
+                      localStorage.removeItem('authFlow');
+                      localStorage.removeItem('token');
+                    } catch {} 
+                    logout();
+                    navigate('/');
+                  }}>Log Out</DropdownItem>
+                </div>
               </DropdownMenu>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <Toolbar activePanel={activePanel} setActivePanel={setActivePanel} />
+      {/* Toolbar - hidden for signin flow */}
+      {authFlow !== 'signin' && <Toolbar activePanel={activePanel} setActivePanel={setActivePanel} />}
 
       {/* Main Content - Show blank state for first-time sign-in, else full editor */}
       {authFlow === 'signin' ? (
@@ -407,7 +518,10 @@ const Dashboard = () => {
             <div className="flex gap-4 justify-center">
               <button
                 className="btn-primary px-6 py-3"
-                onClick={() => setActivePanel('layout')}
+                onClick={() => {
+                  localStorage.setItem('authFlow', 'login');
+                  setAuthFlow('login');
+                }}
               >
                 Create New Presentation
               </button>
@@ -509,10 +623,7 @@ const Dashboard = () => {
         <ThemePresetPicker onClose={() => setShowThemePicker(false)} onSelect={(id) => setPresentationMeta({ ...presentationMeta, themePreset: id, updatedAt: new Date().toISOString() })} />
       )}
 
-      {/* New Feature Modals */}
-      {showAIAssistant && <AIAssistant onClose={() => setShowAIAssistant(false)} />}
-      {showCloudSync && <CloudSync onClose={() => setShowCloudSync(false)} />}
-      {showAdvancedExport && <AdvancedExport onClose={() => setShowAdvancedExport(false)} />}
+
       {showInteractiveElements && <InteractiveElements onClose={() => setShowInteractiveElements(false)} />}
       {showVersionHistory && <VersionHistory onClose={() => setShowVersionHistory(false)} />}
 

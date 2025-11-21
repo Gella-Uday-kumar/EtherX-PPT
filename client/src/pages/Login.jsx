@@ -20,7 +20,7 @@ const Login = () => {
       navigate('/dashboard');
     } catch (error) {
       console.warn('Server login failed, using demo mode');
-      login({ token: 'demo-token', email });
+      login({ token: 'demo-token', email, name: email.split('@')[0] });
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -72,12 +72,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 disabled:opacity-50 font-semibold"
-              style={{
-                background: 'linear-gradient(90deg, var(--accent-gold), var(--gold-hover))',
-                color: '#111',
-                borderRadius: 8
-              }}
+              className="w-full btn-primary py-3 disabled:opacity-50"
             >
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
