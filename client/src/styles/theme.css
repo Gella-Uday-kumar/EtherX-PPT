@@ -55,3 +55,190 @@
   border-color: var(--primary-text);
   box-shadow: 0 0 0 2px rgba(240, 165, 0, 0.2);
 }
+
+/* Editor Wrapper Scroll Styles */
+.editor-wrapper {
+  height: calc(100vh - 80px);
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+.editor-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editor-wrapper::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+}
+
+.editor-wrapper::-webkit-scrollbar-track {
+  background: #f2f2f2;
+}
+
+.editor-wrapper::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+}
+
+.dark .editor-wrapper::-webkit-scrollbar-track {
+  background: #2e2e2e;
+}
+
+.dark .editor-wrapper::-webkit-scrollbar-thumb {
+  background: #444;
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-200px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(200px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(-200px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(200px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-30px); }
+  60% { transform: translateY(-15px); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Animation Classes */
+.animate-fadeIn {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 1s ease-out forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 1s ease-out forwards;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 1s ease-out forwards;
+}
+
+.animate-slideInDown {
+  animation: slideInDown 1s ease-out forwards;
+}
+
+.animate-zoomIn {
+  animation: zoomIn 1s ease-out forwards;
+}
+
+.animate-bounce {
+  animation: bounce 1s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 1s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 1s ease-out forwards;
+}
+
+.animate-rotate {
+  animation: rotate 1s ease-out forwards;
+}
+
+/* Image Editor Styles */
+.image-editor-handle {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border: 1px solid #ffffff;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.image-editor-handle:hover {
+  background: #2563eb;
+}
+
+.crop-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.crop-area {
+  border: 2px dashed #ffffff;
+  background: transparent;
+  position: absolute;
+  cursor: move;
+}
+
+.crop-handle {
+  width: 6px;
+  height: 6px;
+  background: #ffffff;
+  border: 1px solid #666;
+  position: absolute;
+}
+
+.crop-handle.nw { top: -3px; left: -3px; cursor: nw-resize; }
+.crop-handle.ne { top: -3px; right: -3px; cursor: ne-resize; }
+.crop-handle.sw { bottom: -3px; left: -3px; cursor: sw-resize; }
+.crop-handle.se { bottom: -3px; right: -3px; cursor: se-resize; }
+
+/* Table Editor Styles */
+.ppt-table {
+  border-collapse: collapse;
+  border: 2px solid #444;
+  cursor: move;
+  position: absolute;
+  resize: both;
+  overflow: auto;
+}
+
+.ppt-table td {
+  border: 1px solid #666;
+  width: 90px;
+  height: 40px;
+  padding: 5px;
+  text-align: center;
+}

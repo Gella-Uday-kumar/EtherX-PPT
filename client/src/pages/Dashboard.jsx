@@ -32,7 +32,7 @@ import ExportMenu from '../components/ExportMenu';
 import InteractiveElements from '../components/InteractiveElements';
 import MobileView from '../components/MobileView';
 import VersionHistory from '../components/VersionHistory';
-import { exportToJSON, exportPresentation } from '../utils/exportUtils';
+import { exportToJSON, exportPresentation, generateSamplePresentation } from '../utils/exportUtils';
 import { handleFileImport } from '../utils/importUtils';
 
 const Dashboard = () => {
@@ -129,7 +129,7 @@ const Dashboard = () => {
   const renderRightPanel = () => {
     switch (activePanel) {
       case 'layout':
-        return <LayoutSelector />;
+        return <LayoutSelector applyLayout={applyLayout} currentSlide={currentSlide} onClose={() => setActivePanel(null)} />;
       // Removed format, draw, charts, add-ins per simplification
       case 'animations':
         return <AnimationPanel />;
@@ -204,6 +204,22 @@ const Dashboard = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                     </svg>
                     Manage Presentations
+                  </div>
+                </DropdownItem>
+                <DropdownItem onSelect={async () => {
+                  try {
+                    await generateSamplePresentation();
+                    alert('Sample PowerPoint presentation generated successfully!');
+                  } catch (error) {
+                    console.error('Error generating sample presentation:', error);
+                    alert('Error generating sample presentation: ' + error.message);
+                  }
+                }}>
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Generate Sample PPT
                   </div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => setShowTemplateLibrary(true)}>
@@ -322,6 +338,9 @@ const Dashboard = () => {
               
               {authFlow !== 'signin' && (
               <DropdownMenu label="Design" align="left">
+                <DropdownItem onSelect={() => setActivePanel(activePanel === 'layout' ? null : 'layout')}>
+                  <div className="flex items-center gap-2"><RiLayoutLine className="w-4 h-4" /> Layouts</div>
+                </DropdownItem>
                 <DropdownItem onSelect={() => setShowTemplateLibrary(true)}>
                   <div className="flex items-center gap-2"><RiPaletteLine className="w-4 h-4" /> Templates</div>
                 </DropdownItem>
@@ -535,7 +554,7 @@ const Dashboard = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex">
           {/* Sidebar */}
           <Sidebar />
 
@@ -620,7 +639,20 @@ const Dashboard = () => {
         <HeaderFooterModal onClose={() => setShowHeaderFooter(false)} meta={presentationMeta} onSave={(next) => setPresentationMeta({ ...presentationMeta, ...next, updatedAt: new Date().toISOString() })} />
       )}
       {showThemePicker && (
-        <ThemePresetPicker onClose={() => setShowThemePicker(false)} onSelect={(id) => setPresentationMeta({ ...presentationMeta, themePreset: id, updatedAt: new Date().toISOString() })} />
+        <ThemePresetPicker onClose={() => setShowThemePicker(false)} onSelect={(id) => {
+          const themeColors = {
+            'default': { bg: '#1B1A17', text: '#F0A500' },
+            'ocean': { bg: '#0b132b', text: '#e0e6f1' },
+            'forest': { bg: '#0f1f14', text: '#e6f2ea' }
+          }[id] || { bg: '#1B1A17', text: '#F0A500' };
+          const updatedSlides = slides.map(slide => ({
+            ...slide,
+            background: themeColors.bg,
+            textColor: themeColors.text
+          }));
+          setSlides(updatedSlides);
+          setPresentationMeta({ ...presentationMeta, themePreset: id, updatedAt: new Date().toISOString() });
+        }} />
       )}
 
 

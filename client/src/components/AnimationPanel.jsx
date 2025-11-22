@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
 
 const AnimationPanel = () => {
-  const { slides, currentSlide, updateSlide } = usePresentation();
+  const { slides, currentSlide, updateSlide, animationPreview, setAnimationPreview } = usePresentation();
   const [selectedElement, setSelectedElement] = useState('');
-  
+
   const slide = slides[currentSlide] || {};
   const animations = slide.animations || [];
 
@@ -53,8 +53,12 @@ const AnimationPanel = () => {
   };
 
   const previewAnimations = () => {
-    // Placeholder hook for preview; integrate with SlideEditor playback if desired
-    console.log('Preview animations for slide', currentSlide, animations);
+    if (animations.length === 0) return;
+    setAnimationPreview({ active: true, animations });
+    // Reset after animations complete (assume max 5 seconds)
+    setTimeout(() => {
+      setAnimationPreview({ active: false, animations: [] });
+    }, 5000);
   };
 
   const removeAnimation = (animationId) => {

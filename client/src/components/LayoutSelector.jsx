@@ -1,8 +1,6 @@
 import React from 'react';
-import { usePresentation } from '../contexts/PresentationContext';
 
-const LayoutSelector = () => {
-  const { currentSlide, applyLayout } = usePresentation();
+const LayoutSelector = ({ applyLayout, currentSlide, onClose }) => {
 
   const layouts = [
     { id: 'blank', name: 'Blank', icon: '⬜' },
@@ -15,13 +13,16 @@ const LayoutSelector = () => {
   ];
 
   return (
-    <div className="w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4">
+    <div className="fixed right-0 top-16 h-screen w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4 z-10">
       <h3 className="text-lg font-semibold mb-4 dark:text-white">Layout</h3>
       <div className="grid grid-cols-2 gap-2">
         {layouts.map((layout) => (
           <button
             key={layout.id}
-            onClick={() => applyLayout(currentSlide, layout.id)}
+            onClick={() => {
+              applyLayout(currentSlide, layout.id);
+              onClose();
+            }}
             className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <div className="text-2xl mb-1">{layout.icon}</div>
