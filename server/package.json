@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "dev:prod": "nodemon production-server.js",
     "simple": "node simple-server.js",
     "work": "node working-server.js",
     "prod": "node working-backend.js",

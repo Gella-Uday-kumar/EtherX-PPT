@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
+import transporter from './emailTransporter.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -48,17 +48,7 @@ const users = new Map(); // email -> user data
 const otpStorage = new Map(); // email -> otp data
 const sessions = new Map(); // token -> user data
 
-// Gmail transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+// Email transporter is provided by `emailTransporter.js` (verified at startup)
 
 // Utility functions
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -97,7 +87,7 @@ const createOTPEmail = (otp, email) => ({
               <tr>
                 <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
                   <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">🔐 Password Reset</h1>
-                  <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">EtherXPPT - PowerPoint Replica</p>
+                  <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">EtherXPPT</p>
                 </td>
               </tr>
               
@@ -184,7 +174,7 @@ const createSuccessEmail = (email) => ({
               <tr>
                 <td style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); padding: 40px 30px; text-align: center;">
                   <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">✅ Password Reset Successful</h1>
-                  <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">EtherXPPT - PowerPoint Replica</p>
+                  <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">EtherXPPT</p>
                 </td>
               </tr>
               <tr>
@@ -240,6 +230,8 @@ app.get('/', (req, res) => {
     features: ['Authentication', 'OTP Verification', 'Password Reset']
   });
 });
+
+
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -359,19 +351,26 @@ app.post('/api/auth/forgot-password', otpLimiter, async (req, res) => {
     otpStorage.set(email, { otp, expiresAt, attempts, createdAt: new Date() });
 
     // Send email
-    const emailOptions = createOTPEmail(otp, email);
-    await transporter.sendMail(emailOptions);
-
-    console.log(`📧 OTP sent to ${email}: ${otp}`);
-
-    res.json({
-      message: 'OTP sent successfully to your email address',
-      email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
-      expiresIn: '10 minutes'
-    });
+    try {
+      const emailOptions = createOTPEmail(otp, email);
+      const info = await transporter.sendMail(emailOptions);
+      
+      console.log(`📧 OTP sent to ${email}: ${otp}`);
+      
+      res.json({
+        message: 'OTP sent successfully to your email address',
+        email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+        expiresIn: '10 minutes'
+      });
+    } catch (sendErr) {
+      console.error('❌ Email send failed:', sendErr);
+      res.status(500).json({
+        message: 'Failed to send OTP email. Please try again.'
+      });
+    }
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+    res.status(500).json({ message: 'Failed to generate OTP. Please try again.' });
   }
 });
 
@@ -602,8 +601,9 @@ app.use('/api/drawing', (req, res) => res.json({ tools: [] }));
 
 app.listen(PORT, () => {
   console.log(`🚀 EtherXPPT Production Server running on port ${PORT}`);
-  console.log(`📧 Email service: ${process.env.EMAIL_USER}`);
+  console.log(`📧 Email service: ${process.env.EMAIL_USER || 'NOT CONFIGURED'}`);
   console.log(`🔐 JWT Secret configured: ${!!process.env.JWT_SECRET}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
   console.log(`📱 Client URL: ${process.env.CLIENT_URL}`);
+  console.log(`📧 Test email endpoint: POST /api/test-email`);
 });

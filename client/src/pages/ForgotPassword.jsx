@@ -3,16 +3,30 @@ import { Link } from 'react-router-dom';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [step, setStep] = useState('email'); // 'email', 'otp', 'success'
 
-  const handleSubmit = async (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate password reset
+    // Simulate sending OTP
+    setTimeout(() => {
+      setStep('otp');
+      setLoading(false);
+    }, 1000);
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Simulate OTP verification
     setTimeout(() => {
       setMessage('Password reset instructions sent to your email!');
+      setStep('success');
       setLoading(false);
     }, 1000);
   };
@@ -30,17 +44,40 @@ const ForgotPassword = () => {
             <p className="muted">Enter your email to receive reset instructions</p>
           </div>
 
-          {message ? (
+          {step === 'success' ? (
             <div className="text-center">
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
                 {message}
               </div>
-              <Link to="/login" className="text-blue-400 hover:text-blue-300">
-                Back to Login
-              </Link>
+              {/* Success message shown; keep navigation link at the bottom to avoid duplication */}
             </div>
+          ) : step === 'otp' ? (
+            <form onSubmit={handleOtpSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Enter OTP
+                </label>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 relative z-10"
+                  placeholder="Enter 6-digit OTP"
+                  maxLength="6"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-primary py-3 disabled:opacity-50"
+              >
+                {loading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+            </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleEmailSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Email Address
@@ -65,11 +102,13 @@ const ForgotPassword = () => {
             </form>
           )}
 
-          <div className="mt-6 text-center">
-            <Link to="/login" className="text-blue-400 hover:text-blue-300">
-              Back to Login
-            </Link>
-          </div>
+          {step !== 'success' && (
+            <div className="mt-6 text-center">
+              <Link to="/login" className="text-blue-400 hover:text-blue-300">
+                Back to Login
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

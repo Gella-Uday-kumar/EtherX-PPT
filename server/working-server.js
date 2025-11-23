@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
+import transporter from './emailTransporter.js';
 
 dotenv.config();
 
@@ -15,26 +15,7 @@ app.use(express.json());
 // In-memory OTP storage
 const otpStorage = new Map();
 
-// Gmail transporter with better configuration
-let transporter;
-try {
-  transporter = nodemailer.createTransporter({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: 'gellaudaykumar2329@gmail.com',
-      pass: 'elgenqafnspvcbni'
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-  console.log('✅ Email transporter created');
-} catch (error) {
-  console.error('❌ Email transporter failed:', error.message);
-}
+// Reuse centralized transporter from `emailTransporter.js` (creates and verifies at startup)
 
 // Generate OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -42,7 +23,7 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 // Send OTP email
 const sendOTPEmail = async (email, otp) => {
   const mailOptions = {
-    from: 'gellaudaykumar2329@gmail.com',
+    from: process.env.EMAIL_USER,
     to: email,
     subject: 'EtherXPPT - Password Reset OTP',
     html: `
@@ -183,6 +164,6 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log('📧 Email configured for: gellaudaykumar2329@gmail.com');
+  console.log('📧 Email configured for:', process.env.EMAIL_USER);
   console.log('🔑 OTP will be sent to Gmail or shown in console for testing');
 });
