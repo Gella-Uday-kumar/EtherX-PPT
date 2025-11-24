@@ -569,22 +569,7 @@ const Dashboard = () => {
       {/* Speaker Notes */}
       <SpeakerNotes />
 
-      {/* Modern Status Bar */}
-      <div className="status-bar">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse-soft"></div>
-            <span className="font-medium">Ready</span>
-          </div>
-                  </div>
-        <div className="flex items-center space-x-4">
-          <span>Zoom: 100%</span>
-          <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700"></div>
-          <span>View: Normal</span>
-          <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700"></div>
-          <span>Slide {currentSlide + 1} of {slides.length}</span>
-        </div>
-      </div>
+
 
       {/* Slideshow removed */}
       

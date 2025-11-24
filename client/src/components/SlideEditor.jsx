@@ -9,7 +9,7 @@ import TableEditor from './TableEditor';
 import { RiCloseLine } from 'react-icons/ri';
 
 const SlideEditor = () => {
-   const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta, animationPreview } = usePresentation();
+   const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta, animationPreview, selectedAnimation } = usePresentation();
    const [selectedElement, setSelectedElement] = useState(null);
    const [isEditing, setIsEditing] = useState(false);
    const [isDragging, setIsDragging] = useState(false);
@@ -53,6 +53,12 @@ const SlideEditor = () => {
       animationFillMode: 'forwards',
       animationTimingFunction: 'ease-out'
     };
+  };
+
+  const getAnimationKey = (target) => {
+    const animations = slide.animations || [];
+    const animation = animations.find(a => a.target === target);
+    return animation ? `${animation.type}-${animation.id}` : 'none';
   };
 
   const handleTitleEdit = (e) => {
@@ -988,7 +994,7 @@ const SlideEditor = () => {
             {layoutType === 'title-content' && (
               <>
                 <div
-                  key={`title-${animationPreview.active ? 'animating' : 'static'}`}
+                  key={`title-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('title')}`}
                   ref={titleRef}
                   contentEditable
                   suppressContentEditableWarning={true}
@@ -999,7 +1005,7 @@ const SlideEditor = () => {
                   dangerouslySetInnerHTML={{ __html: slide.title || '<span style=\"color:rgba(255,255,255,0.45)\">Click to add title</span>' }}
                 />
                 <div
-                  key={`content-${animationPreview.active ? 'animating' : 'static'}`}
+                  key={`content-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('content')}`}
                   ref={contentRef}
                   contentEditable
                   suppressContentEditableWarning={true}
@@ -1014,7 +1020,7 @@ const SlideEditor = () => {
 
             {layoutType === 'title-only' && (
               <div
-                key={`title-only-${animationPreview.active ? 'animating' : 'static'}`}
+                key={`title-only-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('title')}`}
                 ref={titleRef}
                 contentEditable
                 suppressContentEditableWarning={true}
@@ -1028,7 +1034,7 @@ const SlideEditor = () => {
 
             {layoutType === 'content-only' && (
               <div
-                key={`content-only-${animationPreview.active ? 'animating' : 'static'}`}
+                key={`content-only-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('content')}`}
                 ref={contentRef}
                 contentEditable
                 suppressContentEditableWarning={true}

@@ -25,6 +25,7 @@ export const PresentationProvider = ({ children }) => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [clipboard, setClipboard] = useState(null);
   const [animationPreview, setAnimationPreview] = useState({ active: false, animations: [] });
+  const [selectedAnimation, setSelectedAnimation] = useState(null);
   const [presentationMeta, setPresentationMeta] = useState({
     title: 'Untitled',
     author: '',
@@ -274,7 +275,9 @@ export const PresentationProvider = ({ children }) => {
     setPresentationMeta,
     reorderSlides,
     animationPreview,
-    setAnimationPreview
+    setAnimationPreview,
+    selectedAnimation,
+    setSelectedAnimation
   };
 
   return (

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
 
 const AnimationPanel = () => {
-  const { slides, currentSlide, updateSlide, animationPreview, setAnimationPreview } = usePresentation();
+  const { slides, currentSlide, updateSlide, animationPreview, setAnimationPreview, selectedAnimation, setSelectedAnimation } = usePresentation();
   const [selectedElement, setSelectedElement] = useState('');
 
   const slide = slides[currentSlide] || {};
@@ -22,15 +22,26 @@ const AnimationPanel = () => {
   ];
 
   const addAnimation = (target, animationType) => {
+    // Remove any existing animations for this target to ensure only one animation per target
+    const filteredAnimations = animations.filter(a => a.target !== target);
+    
     const newAnimation = {
       id: Date.now(),
       target, // 'title' | 'content' | elementId
       type: animationType,
       duration: 1000,
       delay: 0,
-      order: animations.length
+      order: filteredAnimations.length
     };
-    updateSlide(currentSlide, { animations: [...animations, newAnimation] });
+    
+    // Update slide with filtered animations plus the new one
+    updateSlide(currentSlide, { animations: [...filteredAnimations, newAnimation] });
+    
+    // Set the selected animation to track current selection
+    setSelectedAnimation({ target, type: animationType });
+    
+    // Clear selected element to force re-render
+    setSelectedElement('');
   };
 
   const updateAnimation = (id, field, value) => {
@@ -94,12 +105,23 @@ const AnimationPanel = () => {
           <div>
             <label className="block text-xs font-medium text-neutral-300 mb-2">Animation Type</label>
             <div className="grid grid-cols-2 gap-2">
-              {animationTypes.map(anim => (
-                <button key={anim.id} onClick={() => addAnimation(selectedElement, anim.id)} className="btn-secondary flex flex-col items-center justify-center p-2 text-xs">
-                  <div>{anim.icon}</div>
-                  <div className="mt-1">{anim.name}</div>
-                </button>
-              ))}
+              {animationTypes.map(anim => {
+                const isActive = selectedAnimation?.target === selectedElement && selectedAnimation?.type === anim.id;
+                return (
+                  <button 
+                    key={anim.id} 
+                    onClick={() => addAnimation(selectedElement, anim.id)} 
+                    className={`flex flex-col items-center justify-center p-2 text-xs transition-all ${
+                      isActive 
+                        ? 'bg-primary-500 text-white border-primary-600' 
+                        : 'btn-secondary'
+                    }`}
+                  >
+                    <div>{anim.icon}</div>
+                    <div className="mt-1">{anim.name}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

@@ -11,9 +11,11 @@ const PresenterMode = ({ isActive, onExit }) => {
    const [drawingPath, setDrawingPath] = useState([]);
    const [screenMode, setScreenMode] = useState('normal'); // 'normal', 'black', 'white'
    const [animationState, setAnimationState] = useState({ active: false, animations: [], currentIndex: 0 });
+   const [isFullscreen, setIsFullscreen] = useState(false);
    const canvasRef = useRef(null);
    const timerRef = useRef(null);
    const animationTimeoutRef = useRef(null);
+   const presenterRef = useRef(null);
 
   const slide = slides[currentSlide] || {};
 
@@ -52,11 +54,80 @@ const PresenterMode = ({ isActive, onExit }) => {
     }, totalTime);
   };
 
+  // Fullscreen functions with cross-browser support
+  const enterFullscreen = async () => {
+    if (!presenterRef.current) return;
+    
+    try {
+      if (presenterRef.current.requestFullscreen) {
+        await presenterRef.current.requestFullscreen();
+      } else if (presenterRef.current.webkitRequestFullscreen) {
+        await presenterRef.current.webkitRequestFullscreen();
+      } else if (presenterRef.current.mozRequestFullScreen) {
+        await presenterRef.current.mozRequestFullScreen();
+      } else if (presenterRef.current.msRequestFullscreen) {
+        await presenterRef.current.msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    } catch (error) {
+      console.warn('Fullscreen request failed:', error);
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        await document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        await document.msExitFullscreen();
+      }
+      setIsFullscreen(false);
+    } catch (error) {
+      console.warn('Exit fullscreen failed:', error);
+    }
+  };
+
+  const handleExit = async () => {
+    if (isFullscreen) {
+      await exitFullscreen();
+    }
+    onExit();
+  };
+
   useEffect(() => {
     if (isActive && !startTime) {
       setStartTime(Date.now());
+      // Auto-enter fullscreen when presenter mode starts
+      setTimeout(() => enterFullscreen(), 100);
     }
   }, [isActive, startTime]);
+
+  // Handle fullscreen change events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(document.fullscreenElement || 
+        document.webkitFullscreenElement || 
+        document.mozFullScreenElement || 
+        document.msFullscreenElement);
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
 
   // Trigger animations when slide changes
   useEffect(() => {
@@ -92,7 +163,7 @@ const PresenterMode = ({ isActive, onExit }) => {
     const handleKeyDown = (e) => {
       switch (e.key) {
         case 'Escape':
-          onExit();
+          handleExit();
           break;
         case 'ArrowRight':
         case ' ':
@@ -129,7 +200,7 @@ const PresenterMode = ({ isActive, onExit }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, currentSlide, slides.length, setCurrentSlide, onExit, showThumbnails]);
+  }, [isActive, currentSlide, slides.length, setCurrentSlide, handleExit, showThumbnails]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -165,7 +236,7 @@ const PresenterMode = ({ isActive, onExit }) => {
   if (!isActive) return null;
 
   return (
-    <div className="fixed inset-0 bg-black z-50">
+    <div ref={presenterRef} className="fixed inset-0 bg-black z-50" style={{ transform: isFullscreen ? 'scale(1)' : 'scale(1)' }}>
       {/* Main Slide Display */}
       <div className="relative w-full h-full flex">
         {/* Slide Content */}
@@ -572,7 +643,7 @@ const PresenterMode = ({ isActive, onExit }) => {
               ⚪ White
             </button>
             <button
-              onClick={onExit}
+              onClick={handleExit}
               className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded"
             >
               Exit Presenter
