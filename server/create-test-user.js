@@ -1,33 +1,21 @@
-import mongoose from 'mongoose';
-import User from './src/models/User.js';
-import dotenv from 'dotenv';
+import jsonDb from './src/utils/jsonDatabase.js';
 
-dotenv.config();
-
-const createTestUser = async () => {
+async function createTestUser() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
-    
-    const existingUser = await User.findOne({ email: 'gellaudaykumar2329@gmail.com' });
-    if (existingUser) {
-      console.log('Test user already exists');
-      return;
-    }
-    
-    const testUser = new User({
+    const testUser = {
       name: 'Test User',
-      email: 'gellaudaykumar2329@gmail.com',
+      email: 'test@example.com',
       password: 'password123'
-    });
-    
-    await testUser.save();
-    console.log('✅ Test user created successfully');
+    };
+
+    const user = await jsonDb.createUser(testUser);
+    console.log('✅ Test user created successfully:');
+    console.log('Email:', user.email);
+    console.log('Password: password123');
+    console.log('User ID:', user.id);
   } catch (error) {
-    console.error('❌ Error:', error.message);
-  } finally {
-    mongoose.disconnect();
+    console.error('❌ Error creating test user:', error);
   }
-};
+}
 
 createTestUser();

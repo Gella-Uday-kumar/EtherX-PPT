@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import jsonDb from '../utils/jsonDatabase.js';
 
 export const authenticateToken = async (req, res, next) => {
   try {
@@ -10,22 +10,18 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
     
-    // Check if user still exists (only if database is connected)
-    if (process.env.MONGODB_URI) {
-      try {
-        const user = await User.findById(decoded.userId).select('-password');
-        if (!user) {
-          return res.status(401).json({ message: 'User not found' });
-        }
-        req.user = { userId: user._id, email: user.email, name: user.name };
-      } catch (dbError) {
-        // Fallback to token data if database is unavailable
-        req.user = { userId: decoded.userId, email: decoded.email };
+    // Check if user still exists in JSON database
+    try {
+      const users = await jsonDb.readUsers();
+      const user = users.find(u => u.id === decoded.userId);
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
       }
-    } else {
-      // Use token data directly when no database
+      req.user = { userId: user.id, email: user.email, name: user.name };
+    } catch (dbError) {
+      // Fallback to token data if database read fails
       req.user = decoded;
     }
     
@@ -49,18 +45,15 @@ export const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
       
-      if (process.env.MONGODB_URI) {
-        try {
-          const user = await User.findById(decoded.userId).select('-password');
-          if (user) {
-            req.user = { userId: user._id, email: user.email, name: user.name };
-          }
-        } catch (dbError) {
-          req.user = decoded;
+      try {
+        const users = await jsonDb.readUsers();
+        const user = users.find(u => u.id === decoded.userId);
+        if (user) {
+          req.user = { userId: user.id, email: user.email, name: user.name };
         }
-      } else {
+      } catch (dbError) {
         req.user = decoded;
       }
     }
@@ -72,7 +65,6 @@ export const optionalAuth = async (req, res, next) => {
   }
 };
 
-// Simple auth for basic functionality
 export const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });

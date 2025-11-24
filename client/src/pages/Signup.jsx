@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/api';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -26,15 +27,33 @@ const Signup = () => {
     }
     setLoading(true);
     
-    setTimeout(() => {
-      login({ 
-        token: 'demo-token', 
-        email: formData.email, 
-        name: `${formData.firstName} ${formData.lastName}`.trim() 
+    try {
+      const name = `${formData.firstName} ${formData.lastName}`.trim();
+      const response = await api.post('/api/auth/register', {
+        name,
+        email: formData.email,
+        password: formData.password
       });
-      navigate('/dashboard');
+      
+      if (response.data.token) {
+        login({
+          token: response.data.token,
+          email: response.data.user.email,
+          name: response.data.user.name,
+          id: response.data.user.id
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (error.response?.status === 400) {
+        alert('User already exists with this email');
+      } else {
+        alert('Registration failed. Please try again.');
+      }
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -112,7 +131,7 @@ const Signup = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <Link to="/login" className="text-blue-400 hover:text-blue-300">
+            <Link to="/login" className="font-medium" style={{ color: 'var(--accent-gold)' }}>
               Already have an account? Login
             </Link>
           </div>

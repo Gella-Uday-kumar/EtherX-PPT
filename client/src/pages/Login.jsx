@@ -16,12 +16,24 @@ const Login = () => {
     
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      login({ token: response.data.token, email });
-      navigate('/dashboard');
+      if (response.data.token) {
+        login({ 
+          token: response.data.token, 
+          email: response.data.user.email,
+          name: response.data.user.name,
+          id: response.data.user.id
+        });
+        navigate('/dashboard');
+      } else {
+        alert('Login failed: Invalid credentials');
+      }
     } catch (error) {
-      console.warn('Server login failed, using demo mode');
-      login({ token: 'demo-token', email, name: email.split('@')[0] });
-      navigate('/dashboard');
+      console.error('Login error:', error);
+      if (error.response?.status === 401) {
+        alert('Invalid email or password. Please check your credentials.');
+      } else {
+        alert('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
