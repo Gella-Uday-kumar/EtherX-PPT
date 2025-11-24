@@ -35,10 +35,20 @@ const TableComponent = ({ onClose }) => {
       cols,
       x: 100,
       y: 100,
-      width: cols * 100,
-      height: rows * 40,
-      headerStyle: { backgroundColor: '#3B82F6', color: '#FFFFFF' },
-      cellStyle: { border: '1px solid #D1D5DB', padding: '8px' }
+      width: Math.max(200, cols * 100),
+      height: Math.max(100, rows * 40),
+      scale: 1,
+      mergedCells: {},
+      styles: {
+        cellBackground: [],
+        cellBorder: {
+          width: [],
+          color: [],
+          style: []
+        },
+        cellTextColor: [],
+        theme: null
+      }
     };
     
     const elements = slides[currentSlide].elements || [];

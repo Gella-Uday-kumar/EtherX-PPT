@@ -6,9 +6,10 @@ import TableComponent from './TableComponent';
 import HeaderFooterModal from './HeaderFooterModal';
 import ImageEditor from './ImageEditor';
 import TableEditor from './TableEditor';
+import AdvancedTableEditor from './AdvancedTableEditor';
 import { RiCloseLine } from 'react-icons/ri';
 
-const SlideEditor = () => {
+const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, snapToGrid = false, zoomLevel = 100 }) => {
    const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta, animationPreview, selectedAnimation } = usePresentation();
    const [selectedElement, setSelectedElement] = useState(null);
    const [isEditing, setIsEditing] = useState(false);
@@ -38,14 +39,22 @@ const SlideEditor = () => {
   const slide = slides[currentSlide] || {};
   const layoutType = (slide.layoutMeta && slide.layoutMeta.type) || slide.layout || 'title-content';
 
+  // Force re-render when layout changes
+  useEffect(() => {
+    // Clear any existing editing state when layout changes
+    setIsEditing(false);
+    setSelectedElement(null);
+  }, [layoutType, currentSlide]);
+
   const getAnimationStyle = (target) => {
+    // Only apply animation styles during preview
     if (!animationPreview.active) return {};
 
     const animations = animationPreview.animations || slide.animations || [];
     const animation = animations.find(a => a.target === target);
     if (!animation) return {};
 
-    // Apply animation only during preview
+    // Apply animation styles during preview
     return {
       animationName: animation.type,
       animationDuration: `${animation.duration}ms`,
@@ -58,7 +67,8 @@ const SlideEditor = () => {
   const getAnimationKey = (target) => {
     const animations = slide.animations || [];
     const animation = animations.find(a => a.target === target);
-    return animation ? `${animation.type}-${animation.id}` : 'none';
+    // Use animation ID and type to create a unique key that changes when animation changes
+    return animation ? `${target}-${animation.type}-${animation.id}` : `${target}-none`;
   };
 
   const handleTitleEdit = (e) => {
@@ -539,7 +549,7 @@ const SlideEditor = () => {
     setIsDragging(true);
 
     const element = (slide.elements || []).find(el => el.id === elementId);
-    if (element && element.type !== 'image' && element.type !== 'table') {
+    if (element && element.type !== 'image') {
       // Push current state to history before starting drag
       const elements = slide.elements || [];
       const updatedElements = [...elements]; // Create a copy
@@ -556,7 +566,7 @@ const SlideEditor = () => {
   const handleMouseMove = (e) => {
     const element = selectedElement ? (slide.elements || []).find(el => el.id === selectedElement) : null;
 
-    if (isDragging && selectedElement && element?.type !== 'image' && element?.type !== 'table') {
+    if (isDragging && selectedElement && element?.type !== 'image') {
       const canvas = e.currentTarget;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left - dragOffset.x;
@@ -565,7 +575,7 @@ const SlideEditor = () => {
       updateElement(selectedElement, { x: Math.max(0, x), y: Math.max(0, y) }, true); // Skip history during drag
     }
 
-    if (isResizing && selectedElement && element?.type !== 'image' && element?.type !== 'table') {
+    if (isResizing && selectedElement && element?.type !== 'image') {
       const canvas = e.currentTarget;
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -579,23 +589,23 @@ const SlideEditor = () => {
       // Calculate new dimensions based on resize handle
       switch (resizeHandle) {
         case 'se': // bottom-right
-          newWidth = Math.max(20, mouseX - resizeStart.x);
-          newHeight = Math.max(20, mouseY - resizeStart.y);
+          newWidth = Math.max(100, mouseX - resizeStart.x);
+          newHeight = Math.max(60, mouseY - resizeStart.y);
           break;
         case 'ne': // top-right
-          newWidth = Math.max(20, mouseX - resizeStart.x);
-          newHeight = Math.max(20, resizeStart.y + resizeStart.height - mouseY);
+          newWidth = Math.max(100, mouseX - resizeStart.x);
+          newHeight = Math.max(60, resizeStart.y + resizeStart.height - mouseY);
           newY = Math.max(0, mouseY);
           break;
         case 'nw': // top-left
-          newWidth = Math.max(20, resizeStart.x + resizeStart.width - mouseX);
-          newHeight = Math.max(20, resizeStart.y + resizeStart.height - mouseY);
+          newWidth = Math.max(100, resizeStart.x + resizeStart.width - mouseX);
+          newHeight = Math.max(60, resizeStart.y + resizeStart.height - mouseY);
           newX = Math.max(0, mouseX);
           newY = Math.max(0, mouseY);
           break;
         case 'sw': // bottom-left
-          newWidth = Math.max(20, resizeStart.x + resizeStart.width - mouseX);
-          newHeight = Math.max(20, mouseY - resizeStart.y);
+          newWidth = Math.max(100, resizeStart.x + resizeStart.width - mouseX);
+          newHeight = Math.max(60, mouseY - resizeStart.y);
           newX = Math.max(0, mouseX);
           break;
       }
@@ -617,7 +627,7 @@ const SlideEditor = () => {
     setResizeHandle(handle);
 
     const element = (slide.elements || []).find(el => el.id === elementId);
-    if (element && element.type !== 'image' && element.type !== 'table') {
+    if (element && element.type !== 'image') {
       // Push current state to history before starting resize
       const elements = slide.elements || [];
       const updatedElements = [...elements]; // Create a copy
@@ -795,6 +805,7 @@ const SlideEditor = () => {
               <button
                 onClick={() => setShowTableModal(true)}
                 className="btn-secondary flex items-center gap-2"
+                title="Insert Advanced Table"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0V4a1 1 0 011-1h16a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1z" />
@@ -937,13 +948,13 @@ const SlideEditor = () => {
 
       {/* Modern Slide Canvas */}
       <div className="flex justify-center">
-        <div className="relative">
+        <div className="relative" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}>
           {/* Canvas Container with Modern Shadow */}
           <div
             className="slide-canvas relative overflow-hidden"
             style={{
-              width: '900px',
-              height: '675px',
+              width: '960px',
+              height: '540px',
               backgroundColor: slide.background || '#ffffff'
             }}
             onMouseMove={handleMouseMove}
@@ -994,77 +1005,79 @@ const SlideEditor = () => {
             {layoutType === 'title-content' && (
               <>
                 <div
-                  key={`title-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('title')}`}
+                  key={`title-content-title-${slide.id || currentSlide}-${layoutType}`}
                   ref={titleRef}
-                  contentEditable
+                  contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleTitleEdit}
                   onFocus={() => setIsEditing(true)}
                   className="absolute top-12 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent"
                   style={{ color: slide.textColor || '#1f2937', ...getAnimationStyle('title') }}
-                  dangerouslySetInnerHTML={{ __html: slide.title || '<span style=\"color:rgba(255,255,255,0.45)\">Click to add title</span>' }}
+                  dangerouslySetInnerHTML={{ __html: slide.title || 'Click to add title' }}
                 />
                 <div
-                  key={`content-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('content')}`}
+                  key={`title-content-content-${slide.id || currentSlide}-${layoutType}`}
                   ref={contentRef}
-                  contentEditable
+                  contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleContentEdit}
                   onFocus={() => setIsEditing(true)}
                   className="absolute top-32 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent"
                   style={{ color: slide.textColor || '#374151', ...getAnimationStyle('content') }}
-                  dangerouslySetInnerHTML={{ __html: slide.content || '<span style="color:rgba(255,255,255,0.45)">Click to add content</span>' }}
+                  dangerouslySetInnerHTML={{ __html: slide.content || 'Click to add content' }}
                 />
               </>
             )}
 
             {layoutType === 'title-only' && (
               <div
-                key={`title-only-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('title')}`}
+                key={`title-only-${slide.id || currentSlide}-${layoutType}`}
                 ref={titleRef}
-                contentEditable
+                contentEditable={true}
                 suppressContentEditableWarning={true}
                 onBlur={handleTitleEdit}
                 onFocus={() => setIsEditing(true)}
                 className="absolute top-24 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent"
                 style={{ color: slide.textColor || '#1f2937', ...getAnimationStyle('title') }}
-                dangerouslySetInnerHTML={{ __html: slide.title || '<span style="color:rgba(255,255,255,0.45)">Click to add title</span>' }}
+                dangerouslySetInnerHTML={{ __html: slide.title || 'Click to add title' }}
               />
             )}
 
             {layoutType === 'content-only' && (
               <div
-                key={`content-only-${animationPreview.active ? 'animating' : 'static'}-${getAnimationKey('content')}`}
+                key={`content-only-${slide.id || currentSlide}-${layoutType}`}
                 ref={contentRef}
-                contentEditable
+                contentEditable={true}
                 suppressContentEditableWarning={true}
                 onBlur={handleContentEdit}
                 onFocus={() => setIsEditing(true)}
                 className="absolute top-16 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent"
                 style={{ color: slide.textColor || '#374151', ...getAnimationStyle('content') }}
-                dangerouslySetInnerHTML={{ __html: slide.content || '<span style="color:rgba(255,255,255,0.45)">Click to add content</span>' }}
+                dangerouslySetInnerHTML={{ __html: slide.content || 'Click to add content' }}
               />
             )}
 
             {layoutType === 'two-column' && (
               <div className="absolute inset-0 pt-20 px-12 pb-12 grid grid-cols-2 gap-6">
                 <div
+                  key={`two-column-left-${slide.id || currentSlide}-${layoutType}`}
                   data-layout="left"
-                  contentEditable
+                  contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleLeftEdit}
                   className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[200px]"
                   style={{ color: slide.textColor || '#374151' }}
-                  dangerouslySetInnerHTML={{ __html: slide.contentLeft || '<span style="color:rgba(255,255,255,0.45)">Left content</span>' }}
+                  dangerouslySetInnerHTML={{ __html: slide.contentLeft || 'Left content' }}
                 />
                 <div
+                  key={`two-column-right-${slide.id || currentSlide}-${layoutType}`}
                   data-layout="right"
-                  contentEditable
+                  contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleRightEdit}
                   className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[200px]"
                   style={{ color: slide.textColor || '#374151' }}
-                  dangerouslySetInnerHTML={{ __html: slide.contentRight || '<span style="color:rgba(255,255,255,0.45)">Right content</span>' }}
+                  dangerouslySetInnerHTML={{ __html: slide.contentRight || 'Right content' }}
                 />
               </div>
             )}
@@ -1082,13 +1095,14 @@ const SlideEditor = () => {
                   <input id="image-text-upload" type="file" accept="image/*" className="hidden" onChange={handleImageTextInputChange} />
                 </div>
                 <div
+                  key={`image-text-content-${slide.id || currentSlide}-${layoutType}`}
                   data-layout="image-text-content"
-                  contentEditable
+                  contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleContentEdit}
                   className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[200px]"
                   style={{ color: slide.textColor || '#374151' }}
-                  dangerouslySetInnerHTML={{ __html: slide.content || '<span style="color:rgba(255,255,255,0.45)">Add text</span>' }}
+                  dangerouslySetInnerHTML={{ __html: slide.content || 'Add text' }}
                 />
               </div>
             )}
@@ -1097,42 +1111,46 @@ const SlideEditor = () => {
               <div className="absolute inset-0 pt-12 px-12 pb-12 grid grid-cols-2 gap-6">
                 <div>
                   <div
-                    contentEditable
+                    key={`comparison-left-title-${slide.id || currentSlide}-${layoutType}`}
+                    contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompLeftTitleEdit}
                     className="text-2xl font-semibold outline-none p-2 rounded-xl bg-transparent min-h-[40px] mb-2 text-center"
                     style={{ color: slide.textColor || '#1f2937' }}
-                    dangerouslySetInnerHTML={{ __html: slide.compLeftTitle || '<span style="color:rgba(255,255,255,0.45)">Left heading</span>' }}
+                    dangerouslySetInnerHTML={{ __html: slide.compLeftTitle || 'Left heading' }}
                   />
                   <div
+                    key={`comparison-left-content-${slide.id || currentSlide}-${layoutType}`}
                     data-layout="comp-left-content"
-                    contentEditable
+                    contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompLeftContentEdit}
                     onMouseDown={(e) => handleBulletClick(e, 'compLeftContent')}
                     className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[160px]"
                     style={{ color: slide.textColor || '#374151' }}
-                    dangerouslySetInnerHTML={{ __html: slide.compLeftContent || '<span style="color:rgba(255,255,255,0.45)">Left content</span>' }}
+                    dangerouslySetInnerHTML={{ __html: slide.compLeftContent || 'Left content' }}
                   />
                 </div>
                 <div>
                   <div
-                    contentEditable
+                    key={`comparison-right-title-${slide.id || currentSlide}-${layoutType}`}
+                    contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompRightTitleEdit}
                     className="text-2xl font-semibold outline-none p-2 rounded-xl bg-transparent min-h-[40px] mb-2 text-center"
                     style={{ color: slide.textColor || '#1f2937' }}
-                    dangerouslySetInnerHTML={{ __html: slide.compRightTitle || '<span style="color:rgba(255,255,255,0.45)">Right heading</span>' }}
+                    dangerouslySetInnerHTML={{ __html: slide.compRightTitle || 'Right heading' }}
                   />
                   <div
+                    key={`comparison-right-content-${slide.id || currentSlide}-${layoutType}`}
                     data-layout="comp-right-content"
-                    contentEditable
+                    contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompRightContentEdit}
                     onMouseDown={(e) => handleBulletClick(e, 'compRightContent')}
                     className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[160px]"
                     style={{ color: slide.textColor || '#374151' }}
-                    dangerouslySetInnerHTML={{ __html: slide.compRightContent || '<span style="color:rgba(255,255,255,0.45)">Right content</span>' }}
+                    dangerouslySetInnerHTML={{ __html: slide.compRightContent || 'Right content' }}
                   />
                 </div>
               </div>
@@ -1143,7 +1161,7 @@ const SlideEditor = () => {
             {/* Modern Dynamic Elements */}
             {(slide.elements || []).map((element) => {
               const elementAnimations = slide.animations?.filter(a => a.target === element.id) || [];
-              const animationKey = elementAnimations.length > 0 ? elementAnimations.map(a => a.id).join('-') : 'none';
+              const animationKey = elementAnimations.length > 0 ? elementAnimations.map(a => `${a.type}-${a.id}`).join('-') : 'none';
 
               return (
                 <div
@@ -1330,13 +1348,22 @@ const SlideEditor = () => {
               )}
               
               {element.type === 'table' && (
-                <TableEditor
+                <AdvancedTableEditor
                   element={element}
-                  onUpdate={(updates) => updateElement(element.id, updates)}
+                  onUpdate={(updates) => {
+                    updateElement(element.id, updates);
+                    if (onTableSelect) onTableSelect({ ...element, ...updates });
+                  }}
                   onDelete={() => deleteElement(element.id)}
                   isSelected={selectedElement === element.id}
-                  onSelect={() => setSelectedElement(element.id)}
-                  onCellSelect={(cellInfo) => setSelectedTableCell(cellInfo ? { elementId: element.id, ...cellInfo } : null)}
+                  onSelect={() => {
+                    setSelectedElement(element.id);
+                    if (onTableSelect) onTableSelect(element);
+                  }}
+                  onCellSelect={(cellInfo) => {
+                    setSelectedTableCell(cellInfo ? { elementId: element.id, ...cellInfo } : null);
+                    if (onTableCellSelect && cellInfo) onTableCellSelect([`${cellInfo.rowIndex}-${cellInfo.colIndex}`]);
+                  }}
                 />
               )}
 
@@ -1371,34 +1398,34 @@ const SlideEditor = () => {
                 </div>
               )}
               
-                {selectedElement === element.id && element.type !== 'image' && element.type !== 'table' && (
+                {selectedElement === element.id && element.type !== 'image' && (
                   <>
                     {/* Modern Delete Button */}
                     <button
                       onClick={(e) => {
-                        // Allow normal event handling
+                        e.stopPropagation();
                         deleteElement(element.id);
                       }}
-                      className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center"
+                      className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center z-10"
                     >
                       <RiCloseLine className="w-4 h-4" />
                     </button>
 
                     {/* Resize Handles */}
                     <div
-                      className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary-500 rounded-full cursor-se-resize"
+                      className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary-500 rounded-full cursor-se-resize z-10"
                       onMouseDown={(e) => handleResizeStart(e, element.id, 'se')}
                     ></div>
                     <div
-                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full cursor-ne-resize"
+                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full cursor-ne-resize z-10"
                       onMouseDown={(e) => handleResizeStart(e, element.id, 'ne')}
                     ></div>
                     <div
-                      className="absolute -top-1 -left-1 w-3 h-3 bg-primary-500 rounded-full cursor-nw-resize"
+                      className="absolute -top-1 -left-1 w-3 h-3 bg-primary-500 rounded-full cursor-nw-resize z-10"
                       onMouseDown={(e) => handleResizeStart(e, element.id, 'nw')}
                     ></div>
                     <div
-                      className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary-500 rounded-full cursor-sw-resize"
+                      className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary-500 rounded-full cursor-sw-resize z-10"
                       onMouseDown={(e) => handleResizeStart(e, element.id, 'sw')}
                     ></div>
                   </>
@@ -1413,7 +1440,7 @@ const SlideEditor = () => {
           </div>
           {/* Canvas Info */}
           <div className="absolute -bottom-8 left-0 text-xs text-neutral-500 dark:text-neutral-400">
-            16:12 Aspect Ratio • 900×675px
+            16:9 Aspect Ratio • 960×540px • 13.33"×7.5"
           </div>
         </div>
       </div>

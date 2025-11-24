@@ -23,7 +23,7 @@ const Login = () => {
           name: response.data.user.name,
           id: response.data.user.id
         });
-        navigate('/dashboard');
+        navigate('/home');
       } else {
         alert('Login failed: Invalid credentials');
       }

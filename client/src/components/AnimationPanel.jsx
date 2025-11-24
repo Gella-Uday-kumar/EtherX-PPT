@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
 
 const AnimationPanel = () => {
@@ -35,13 +35,11 @@ const AnimationPanel = () => {
     };
     
     // Update slide with filtered animations plus the new one
-    updateSlide(currentSlide, { animations: [...filteredAnimations, newAnimation] });
+    const updatedAnimations = [...filteredAnimations, newAnimation];
+    updateSlide(currentSlide, { animations: updatedAnimations });
     
-    // Set the selected animation to track current selection
-    setSelectedAnimation({ target, type: animationType });
-    
-    // Clear selected element to force re-render
-    setSelectedElement('');
+    // Update the selected animation to track current selection
+    setSelectedAnimation({ target, type: animationType, id: newAnimation.id });
   };
 
   const updateAnimation = (id, field, value) => {
@@ -79,6 +77,22 @@ const AnimationPanel = () => {
 
   const elements = slide.elements || [];
 
+  // Sync selectedAnimation state when animations change
+  useEffect(() => {
+    if (selectedElement && animations.length > 0) {
+      const currentAnimation = animations.find(a => a.target === selectedElement);
+      if (currentAnimation) {
+        setSelectedAnimation({ 
+          target: currentAnimation.target, 
+          type: currentAnimation.type, 
+          id: currentAnimation.id 
+        });
+      } else {
+        setSelectedAnimation(null);
+      }
+    }
+  }, [animations, selectedElement, setSelectedAnimation]);
+
   return (
     <div className="w-64 panel p-4">
       {/* Panel title uses nav-title for consistent gold color */}
@@ -106,7 +120,10 @@ const AnimationPanel = () => {
             <label className="block text-xs font-medium text-neutral-300 mb-2">Animation Type</label>
             <div className="grid grid-cols-2 gap-2">
               {animationTypes.map(anim => {
-                const isActive = selectedAnimation?.target === selectedElement && selectedAnimation?.type === anim.id;
+                // Check if this animation type is currently applied to the selected element
+                const currentAnimation = animations.find(a => a.target === selectedElement && a.type === anim.id);
+                const isActive = !!currentAnimation;
+                
                 return (
                   <button 
                     key={anim.id} 

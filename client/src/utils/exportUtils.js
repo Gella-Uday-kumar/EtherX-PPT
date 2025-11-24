@@ -166,30 +166,40 @@ export const importFromJSON = (jsonData) => {
 };
 
 export const exportPresentation = async (slides, format, filename = 'presentation') => {
-  switch (format) {
-    case 'pptx':
-      return await exportToPowerPoint(slides, filename);
-    case 'pdf':
-      return await exportToPDF(slides, filename);
-    case 'odp':
-      return await exportToODP(slides, filename);
-    case 'docx':
-      return await exportToWord(slides, filename);
-    case 'rtf':
-      return await exportToRTF(slides, filename);
-    case 'mp4':
-      return await exportToVideo(slides, filename);
-    case 'png':
-      return await exportToPNG(slides, filename);
-    case 'jpeg':
-      return await exportToJPEG(slides, filename);
-    default:
-      throw new Error(`Unsupported export format: ${format}`);
+  try {
+    switch (format) {
+      case 'pptx':
+        return await exportToPowerPoint(slides, filename);
+      case 'pdf':
+        return await exportToPDF(slides, filename);
+      case 'odp':
+        return await exportToODP(slides, filename);
+      case 'docx':
+        return await exportToWord(slides, filename);
+      case 'rtf':
+        return await exportToRTF(slides, filename);
+      case 'mp4':
+        return await exportToVideo(slides, filename);
+      case 'png':
+        return await exportToPNG(slides, filename);
+      case 'jpeg':
+        return await exportToJPEG(slides, filename);
+      default:
+        // Fallback to JSON export for unsupported formats
+        console.warn(`Format ${format} not fully supported, exporting as JSON`);
+        return exportToJSON(slides, `${filename}.json`);
+    }
+  } catch (error) {
+    console.error(`Export failed for format ${format}:`, error);
+    // Fallback to JSON export if the requested format fails
+    console.log('Falling back to JSON export...');
+    return exportToJSON(slides, `${filename}.json`);
   }
 };
 
 const exportToPowerPoint = async (slides, filename) => {
-  const pptx = new PptxGenJS();
+  try {
+    const pptx = new PptxGenJS();
 
   // Set presentation properties
   pptx.author = 'EtherXPPT';
@@ -493,9 +503,13 @@ const exportToPowerPoint = async (slides, filename) => {
     }
   }
 
-  // Save the presentation
-  await pptx.writeFile({ fileName: `${filename}.pptx` });
-  console.log('PowerPoint export completed');
+    // Save the presentation
+    await pptx.writeFile({ fileName: `${filename}.pptx` });
+    console.log('PowerPoint export completed');
+  } catch (error) {
+    console.error('PowerPoint export failed:', error);
+    throw new Error('PowerPoint export failed: ' + error.message);
+  }
 };
 
 const exportToPDF = async (slides, filename) => {

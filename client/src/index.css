@@ -16,18 +16,36 @@
     --panel-radius: 12px;
     --control-radius: 10px;
     --card-shadow: 0 6px 18px rgba(240,165,0,0.06);
+    
+    /* OKLCH Color Variables */
+    --color-emerald-400: oklch(87.148% 0.13842 103.946);
+    --color-emerald-500: oklch(87.148% 0.13842 103.946);
+    --color-emerald-600: oklch(87.148% 0.13842 103.946);
+    --color-emerald-700: oklch(87.148% 0.13842 103.946);
+    --color-emerald-800: oklch(87.148% 0.13842 103.946);
+    --color-gray-50: oklch(.985 .002 247.839);
+    --color-gray-100: oklch(.967 .003 264.542);
+    --color-gray-200: oklch(.928 .006 264.531);
+    --color-gray-300: oklch(.872 .01 258.338);
+    --color-gray-400: oklch(.707 .022 261.325);
+    --color-gray-500: oklch(.551 .027 264.364);
+    --color-gray-600: oklch(.446 .03 256.802);
+    --color-gray-700: oklch(.373 .034 259.733);
+    --color-gray-800: oklch(.278 .033 256.848);
+    --color-gray-900: oklch(.21 .034 264.665);
+    --color-white: #fff;
   }
 
   /* Light mode: Golden + White */
   body {
-    background: #ffffff;
-    color: #000000;
+    background: var(--color-white);
+    color: var(--color-gray-900);
   }
   
   /* Dark mode: Golden + Black */
   .dark body {
-    background: #000000;
-    color: #ffffff;
+    background: var(--color-gray-900);
+    color: var(--color-white);
   }
 
   * {
@@ -48,8 +66,8 @@
   }
 
   .dark {
-    background-color: #000000;
-    color: #ffffff;
+    background-color: var(--color-gray-900);
+    color: var(--color-white);
   }
 }
 
@@ -253,12 +271,25 @@
   }
 
   /* Ensure proper scaling in fullscreen */
-  :fullscreen .presenter-fullscreen,
-  :-webkit-full-screen .presenter-fullscreen,
-  :-moz-full-screen .presenter-fullscreen,
-  :-ms-fullscreen .presenter-fullscreen {
-    width: 100vw;
-    height: 100vh;
+  :fullscreen,
+  :-webkit-full-screen,
+  :-moz-full-screen,
+  :-ms-fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #000000 !important;
+  }
+
+  /* Scale slide content proportionally in fullscreen */
+  :fullscreen .slide-canvas,
+  :-webkit-full-screen .slide-canvas,
+  :-moz-full-screen .slide-canvas,
+  :-ms-fullscreen .slide-canvas {
+    max-width: 100vw;
+    max-height: 100vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
   }
 
 

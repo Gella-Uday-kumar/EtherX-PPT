@@ -35,6 +35,19 @@ const PresenterMode = ({ isActive, onExit }) => {
     };
   };
 
+  const getTransitionTransform = (transition, direction) => {
+    const transforms = {
+      fade: direction === 'enter' ? 'scale(0.95)' : 'scale(1.05)',
+      push: direction === 'enter' ? 'translateX(100%)' : 'translateX(-100%)',
+      wipe: direction === 'enter' ? 'translateY(100%)' : 'translateY(-100%)',
+      split: direction === 'enter' ? 'scaleX(0)' : 'scaleX(1)',
+      reveal: direction === 'enter' ? 'translateX(-100%) scale(0.8)' : 'translateX(100%) scale(0.8)',
+      cover: direction === 'enter' ? 'translateY(-100%)' : 'translateY(100%)',
+      flash: direction === 'enter' ? 'scale(1.2)' : 'scale(0.8)'
+    };
+    return transforms[transition] || 'translateX(100%)';
+  };
+
   const triggerAnimations = () => {
     const animations = slide.animations || [];
     if (animations.length === 0) return;
@@ -106,6 +119,13 @@ const PresenterMode = ({ isActive, onExit }) => {
     }
   }, [isActive, startTime]);
 
+  // Auto-enter fullscreen when presenter mode becomes active
+  useEffect(() => {
+    if (isActive) {
+      enterFullscreen();
+    }
+  }, [isActive]);
+
   // Handle fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -129,9 +149,28 @@ const PresenterMode = ({ isActive, onExit }) => {
     };
   }, []);
 
-  // Trigger animations when slide changes
+  // Handle slide transitions and animations
   useEffect(() => {
-    if (isActive) {
+    if (isActive && slides[currentSlide]) {
+      const slide = slides[currentSlide];
+      const slideElement = presenterRef.current?.querySelector('.slide-content');
+      
+      if (slideElement) {
+        if (slide?.transition && slide.transition !== 'none') {
+          slideElement.style.opacity = '0';
+          slideElement.style.transform = getTransitionTransform(slide.transition, 'enter');
+          
+          setTimeout(() => {
+            slideElement.style.transition = `all ${slide.transitionDuration || 1}s ease-in-out`;
+            slideElement.style.opacity = '1';
+            slideElement.style.transform = 'none';
+          }, 50);
+        } else {
+          slideElement.style.transition = 'none';
+          slideElement.style.opacity = '1';
+          slideElement.style.transform = 'none';
+        }
+      }
       triggerAnimations();
     }
   }, [currentSlide, isActive]);
@@ -169,11 +208,19 @@ const PresenterMode = ({ isActive, onExit }) => {
         case ' ':
         case 'Enter':
           if (currentSlide < slides.length - 1) {
+            const nextSlide = slides[currentSlide + 1];
+            if (nextSlide?.transition) {
+              console.log(`Applying ${nextSlide.transition} transition`);
+            }
             setCurrentSlide(currentSlide + 1);
           }
           break;
         case 'ArrowLeft':
           if (currentSlide > 0) {
+            const prevSlide = slides[currentSlide - 1];
+            if (prevSlide?.transition) {
+              console.log(`Applying ${prevSlide.transition} transition`);
+            }
             setCurrentSlide(currentSlide - 1);
           }
           break;
@@ -242,13 +289,15 @@ const PresenterMode = ({ isActive, onExit }) => {
         {/* Slide Content */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div
-            className={`w-full h-full max-w-7xl max-h-full flex items-center justify-center rounded-lg shadow-2xl ${
+            className={`slide-content w-full h-full max-w-7xl max-h-full flex items-center justify-center rounded-lg shadow-2xl ${
               screenMode === 'black' ? 'bg-black' :
               screenMode === 'white' ? 'bg-white' : ''
             }`}
             style={{
               backgroundColor: screenMode === 'normal' ? (slide.background || '#ffffff') : undefined,
-              aspectRatio: '16/9'
+              aspectRatio: '16/9',
+              maxWidth: isFullscreen ? '100vw' : '100%',
+              maxHeight: isFullscreen ? '100vh' : '100%'
             }}
           >
             <div className="w-full h-full relative">

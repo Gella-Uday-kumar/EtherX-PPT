@@ -20,7 +20,7 @@ const LayoutSelector = ({ applyLayout, currentSlide, onClose }) => {
           <button
             key={layout.id}
             onClick={() => {
-              applyLayout(currentSlide, layout.id);
+              applyLayout(layout.id);
               onClose();
             }}
             className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

@@ -14,6 +14,7 @@ import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
 import Wallet from './pages/Wallet';
 import Terms from './pages/Terms';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -40,6 +41,14 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route 
+                    path="/home" 
+                    element={
+                      <ProtectedRoute>
+                        <Home />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route 
                     path="/dashboard" 
                     element={

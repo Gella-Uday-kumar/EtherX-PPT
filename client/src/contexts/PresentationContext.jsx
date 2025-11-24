@@ -120,9 +120,8 @@ export const PresentationProvider = ({ children }) => {
     switch (layout) {
       case 'blank':
         layoutMeta = { type: 'blank' };
-        // Clear standard fields for blank if desired
-        current.title = '';
-        current.content = '';
+        current.title = current.title || '';
+        current.content = current.content || '';
         break;
       case 'title-content':
         layoutMeta = { type: 'title-content' };
@@ -132,13 +131,9 @@ export const PresentationProvider = ({ children }) => {
         } else if (current.layout === 'comparison') {
           current.title = current.compLeftTitle || current.title || '';
           current.content = (current.compLeftContent || '') + (current.compRightContent ? '\n\n' + current.compRightContent : '');
-        } else if (current.layout === 'image-text') {
-          current.content = current.content || '';
-        } else if (current.layout === 'title-only') {
-          current.title = current.title || '';
-        } else if (current.layout === 'content-only') {
-          current.content = current.content || '';
         }
+        current.title = current.title || 'Click to add title';
+        current.content = current.content || 'Click to add content';
         // Clear layout-specific fields
         delete current.contentLeft;
         delete current.contentRight;
@@ -146,49 +141,43 @@ export const PresentationProvider = ({ children }) => {
         delete current.compLeftContent;
         delete current.compRightTitle;
         delete current.compRightContent;
-        delete current.imageSrc;
         break;
       case 'title-only':
         layoutMeta = { type: 'title-only' };
-        current.title = current.title || '';
-        current.content = '';
+        current.title = current.title || 'Click to add title';
         break;
       case 'content-only':
         layoutMeta = { type: 'content-only' };
-        current.title = '';
-        current.content = current.content || '';
+        current.content = current.content || 'Click to add content';
         break;
       case 'two-column':
         layoutMeta = { type: 'two-column', columns: 2 };
         if (current.layout === 'comparison') {
-          current.contentLeft = current.contentLeft || current.compLeftContent || '';
-          current.contentRight = current.contentRight || current.compRightContent || '';
+          current.contentLeft = current.contentLeft || current.compLeftContent || 'Left content';
+          current.contentRight = current.contentRight || current.compRightContent || 'Right content';
         } else {
-          current.contentLeft = current.contentLeft || current.content || '';
-          current.contentRight = current.contentRight || '';
+          current.contentLeft = current.contentLeft || current.content || 'Left content';
+          current.contentRight = current.contentRight || 'Right content';
         }
-        current.content = '';
         break;
       case 'image-text':
         layoutMeta = { type: 'image-text', regions: [{ type: 'image' }, { type: 'text' }] };
         current.imageSrc = current.imageSrc || '';
-        current.content = current.content || '';
+        current.content = current.content || 'Add text';
         break;
       case 'comparison':
         layoutMeta = { type: 'comparison', columns: 2 };
         if (current.layout === 'two-column') {
-          current.compLeftTitle = current.compLeftTitle || current.title || '';
-          current.compLeftContent = current.compLeftContent || current.contentLeft || '';
-          current.compRightTitle = current.compRightTitle || '';
-          current.compRightContent = current.compRightContent || current.contentRight || '';
+          current.compLeftTitle = current.compLeftTitle || current.title || 'Left heading';
+          current.compLeftContent = current.compLeftContent || current.contentLeft || 'Left content';
+          current.compRightTitle = current.compRightTitle || 'Right heading';
+          current.compRightContent = current.compRightContent || current.contentRight || 'Right content';
         } else {
-          current.compLeftTitle = current.compLeftTitle || current.title || '';
-          current.compLeftContent = current.compLeftContent || current.content || '';
-          current.compRightTitle = current.compRightTitle || '';
-          current.compRightContent = current.compRightContent || '';
+          current.compLeftTitle = current.compLeftTitle || current.title || 'Left heading';
+          current.compLeftContent = current.compLeftContent || current.content || 'Left content';
+          current.compRightTitle = current.compRightTitle || 'Right heading';
+          current.compRightContent = current.compRightContent || 'Right content';
         }
-        current.title = '';
-        current.content = '';
         break;
       default:
         layoutMeta = { type: layout };

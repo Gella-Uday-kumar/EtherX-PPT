@@ -150,9 +150,7 @@ const Landing = () => {
             <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Documentation</a>
             <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Support</a>
           </div>
-          <div className="mt-8 pt-8 border-t border-transparent">
-            <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>© 2025 EtherXPPT. All rights reserved.</p>
-          </div>
+
         </div>
       </footer>
     </div>
