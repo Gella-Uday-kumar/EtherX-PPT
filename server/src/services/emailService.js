@@ -20,6 +20,12 @@ class EmailService {
   }
 
   async sendOTP(email, otp, name = 'User') {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { success: false, error: 'Invalid email format' };
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -84,6 +90,15 @@ class EmailService {
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error('Email sending failed:', error);
+      
+      // Handle specific email errors
+      if (error.code === 'EENVELOPE' || error.responseCode === 550) {
+        return { success: false, error: 'Email address not found or invalid' };
+      }
+      if (error.code === 'EAUTH') {
+        return { success: false, error: 'Email authentication failed' };
+      }
+      
       return { success: false, error: error.message };
     }
   }

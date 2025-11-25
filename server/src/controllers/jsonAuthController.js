@@ -75,12 +75,22 @@ export const login = async (req, res) => {
   }
 };
 
+// Email validation function
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
     }
 
     const user = await jsonDb.findUserByEmail(email);
