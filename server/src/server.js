@@ -66,6 +66,10 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/auth', jsonAuthRoutes);
 
+// Import IPFS routes
+import ipfsRoutes from './routes/ipfs.js';
+app.use('/api/ipfs', ipfsRoutes);
+
 // Basic API endpoints for missing routes
 app.use('/api/cloud', (req, res) => res.json({ message: 'Cloud service not implemented' }));
 app.use('/api/presentations', (req, res) => res.json({ presentations: [] }));

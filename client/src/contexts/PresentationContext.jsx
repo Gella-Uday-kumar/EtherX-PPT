@@ -227,6 +227,35 @@ export const PresentationProvider = ({ children }) => {
     pushHistory(next);
   };
 
+  const saveToIPFS = async () => {
+    try {
+      const { default: ipfsService } = await import('../services/ipfsService.js');
+      const result = await ipfsService.savePresentation({ slides, presentationMeta, savedAt: new Date().toISOString() });
+      localStorage.setItem('lastIPFSHash', result.ipfsHash);
+      return result;
+    } catch (error) {
+      console.error('Manual save to IPFS failed:', error);
+      throw error;
+    }
+  };
+
+  const loadFromIPFS = async (ipfsHash) => {
+    try {
+      const { default: ipfsService } = await import('../services/ipfsService.js');
+      const result = await ipfsService.loadPresentation(ipfsHash);
+      if (result.success && result.data) {
+        setSlides(result.data.slides || []);
+        setPresentationMeta(result.data.presentationMeta || presentationMeta);
+        pushHistory(result.data.slides || []);
+        return result;
+      }
+      throw new Error('Invalid data received');
+    } catch (error) {
+      console.error('Load from IPFS failed:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     // initialize history on mount
     if (historyIndex === -1) {
@@ -238,8 +267,19 @@ export const PresentationProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
+      // Save to localStorage
       localStorage.setItem('presentation', JSON.stringify({ slides, presentationMeta }));
+      
+      // Auto-save to IPFS
+      try {
+        const { default: ipfsService } = await import('../services/ipfsService.js');
+        const result = await ipfsService.savePresentation({ slides, presentationMeta, savedAt: new Date().toISOString() });
+        console.log('Auto-saved to IPFS:', result.ipfsHash);
+        localStorage.setItem('lastIPFSHash', result.ipfsHash);
+      } catch (error) {
+        console.warn('Auto-save to IPFS failed:', error.message);
+      }
     }, 30000);
     return () => clearInterval(interval);
   }, [slides, presentationMeta]);
@@ -266,7 +306,9 @@ export const PresentationProvider = ({ children }) => {
     animationPreview,
     setAnimationPreview,
     selectedAnimation,
-    setSelectedAnimation
+    setSelectedAnimation,
+    saveToIPFS,
+    loadFromIPFS
   };
 
   return (

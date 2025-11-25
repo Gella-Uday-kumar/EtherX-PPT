@@ -121,34 +121,37 @@ const Home = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen" style={{ backgroundColor: '#1B1A17' }}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header style={{ backgroundColor: '#000000', borderBottom: '1px solid #F0A500' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <img src="/DOCS-LOGO-final-transparent.png" alt="EtherX Logo" className="w-8 h-8" />
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">PowerPoint</h1>
+                <h1 className="text-xl font-semibold" style={{ color: '#F0A500' }}>PowerPoint</h1>
               </div>
               
               {/* Navigation Tabs */}
               <nav className="flex space-x-8">
                 <button
                   onClick={() => setActiveTab('home')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'home' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'home' ? 'border-b-2' : 'hover:opacity-80'}`}
+                  style={{ color: activeTab === 'home' ? '#F0A500' : '#F0A500', borderColor: activeTab === 'home' ? '#F0A500' : 'transparent' }}
                 >
                   Home
                 </button>
                 <button
                   onClick={() => setActiveTab('new')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'new' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'new' ? 'border-b-2' : 'hover:opacity-80'}`}
+                  style={{ color: '#F0A500', borderColor: activeTab === 'new' ? '#F0A500' : 'transparent' }}
                 >
                   New
                 </button>
                 <button
                   onClick={() => setActiveTab('open')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'open' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'open' ? 'border-b-2' : 'hover:opacity-80'}`}
+                  style={{ color: '#F0A500', borderColor: activeTab === 'open' ? '#F0A500' : 'transparent' }}
                 >
                   Open
                 </button>
@@ -162,7 +165,8 @@ const Home = () => {
                   placeholder="Search templates and files"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-80 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-80 px-4 py-2 pl-10 pr-4 text-sm border rounded-lg focus:ring-2 focus:outline-none"
+                  style={{ backgroundColor: '#000000', color: '#F0A500', borderColor: '#F0A500' }}
                 />
                 <svg className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -231,17 +235,19 @@ const Home = () => {
             {/* Quick Actions */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Start a new presentation</h2>
+                <h2 className="text-2xl font-semibold" style={{ color: '#F0A500' }}>Start a new presentation</h2>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleOpenFile}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: '#F0A500', color: '#1B1A17' }}
                   >
                     Open File
                   </button>
                   <button
                     onClick={() => handleCreateNew()}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 rounded-lg transition-colors border"
+                    style={{ backgroundColor: 'transparent', color: '#F0A500', borderColor: '#F0A500' }}
                   >
                     New Blank
                   </button>
@@ -259,7 +265,7 @@ const Home = () => {
                       <svg className="w-12 h-12 mx-auto text-gray-400 group-hover:text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
                       </svg>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Blank</p>
+                      <p className="text-sm" style={{ color: '#F0A500' }}>Blank</p>
                     </div>
                   </div>
                 </div>
@@ -281,7 +287,7 @@ const Home = () => {
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 text-center">{template.name}</p>
+                    <p className="text-sm mt-2 text-center" style={{ color: '#F0A500' }}>{template.name}</p>
                   </div>
                 ))}
               </div>
@@ -291,14 +297,15 @@ const Home = () => {
             {pinnedFiles.length > 0 && (
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pinned</h2>
+                  <h2 className="text-xl font-semibold" style={{ color: '#F0A500' }}>Pinned</h2>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {pinnedFiles.map((file) => (
                     <div 
                       key={file.id}
-                      className="cursor-pointer bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow p-4 group"
+                      className="cursor-pointer rounded-lg border hover:shadow-md transition-shadow p-4 group"
+                      style={{ backgroundColor: '#000000', borderColor: '#F0A500' }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-3 flex-1" onClick={() => navigate('/dashboard')}>
@@ -308,7 +315,7 @@ const Home = () => {
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
+                            <p className="text-sm font-medium truncate" style={{ color: '#F0A500' }}>{file.name}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(file.modified).toLocaleDateString()}</p>
                           </div>
                         </div>
@@ -329,10 +336,11 @@ const Home = () => {
             {/* Recent Files */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent</h2>
+                <h2 className="text-xl font-semibold" style={{ color: '#F0A500' }}>Recent</h2>
                 <button 
                   onClick={() => setActiveTab('open')}
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="text-sm hover:opacity-80"
+                  style={{ color: '#F0A500' }}
                 >
                   See all
                 </button>
@@ -389,7 +397,7 @@ const Home = () => {
 
         {activeTab === 'new' && (
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Choose a template</h2>
+            <h2 className="text-2xl font-semibold mb-6" style={{ color: '#F0A500' }}>Choose a template</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {filteredTemplates.map((template) => (
                 <div 
@@ -421,10 +429,11 @@ const Home = () => {
         {activeTab === 'open' && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Open a file</h2>
+              <h2 className="text-2xl font-semibold" style={{ color: '#F0A500' }}>Open a file</h2>
               <button
                 onClick={handleOpenFile}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: '#F0A500', color: '#1B1A17' }}
               >
                 Browse Files
               </button>
@@ -432,7 +441,7 @@ const Home = () => {
             
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent files</h3>
+                <h3 className="text-lg font-medium mb-4" style={{ color: '#F0A500' }}>Recent files</h3>
                 <div className="space-y-2">
                   {recentFiles.map((file) => (
                     <div 
