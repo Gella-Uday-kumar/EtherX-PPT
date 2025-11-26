@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import userDataService from '../services/userDataService.js';
+import { useAuth } from './AuthContext.jsx';
 
 const PresentationContext = createContext();
 
@@ -11,6 +13,7 @@ export const usePresentation = () => {
 };
 
 export const PresentationProvider = ({ children }) => {
+  const { user } = useAuth();
   const [slides, setSlides] = useState([{
     id: 1,
     title: 'Slide 1',
@@ -256,6 +259,46 @@ export const PresentationProvider = ({ children }) => {
     }
   };
 
+  // User data functions
+  const saveCurrentPresentation = () => {
+    if (user?.id) {
+      const presentationData = {
+        title: presentationMeta.title,
+        slides,
+        presentationMeta,
+        lastModified: new Date().toISOString()
+      };
+      userDataService.savePresentation(user.id, presentationData);
+    }
+  };
+
+  const addToFavorites = () => {
+    if (user?.id) {
+      const presentationData = {
+        title: presentationMeta.title,
+        slides,
+        lastModified: new Date().toISOString()
+      };
+      return userDataService.addToFavorites(user.id, presentationData);
+    }
+    return null;
+  };
+
+  const getUserHistory = () => {
+    return user?.id ? userDataService.getHistory(user.id) : [];
+  };
+
+  const getUserFavorites = () => {
+    return user?.id ? userDataService.getFavorites(user.id) : [];
+  };
+
+  const removeFromFavorites = (presentationId) => {
+    if (user?.id) {
+      return userDataService.removeFromFavorites(user.id, presentationId);
+    }
+    return [];
+  };
+
   useEffect(() => {
     // initialize history on mount
     if (historyIndex === -1) {
@@ -271,6 +314,9 @@ export const PresentationProvider = ({ children }) => {
       // Save to localStorage
       localStorage.setItem('presentation', JSON.stringify({ slides, presentationMeta }));
       
+      // Auto-save user data
+      saveCurrentPresentation();
+      
       // Auto-save to IPFS
       try {
         const { default: ipfsService } = await import('../services/ipfsService.js');
@@ -282,7 +328,7 @@ export const PresentationProvider = ({ children }) => {
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [slides, presentationMeta]);
+  }, [slides, presentationMeta, user]);
 
   const value = {
     slides,
@@ -308,7 +354,12 @@ export const PresentationProvider = ({ children }) => {
     selectedAnimation,
     setSelectedAnimation,
     saveToIPFS,
-    loadFromIPFS
+    loadFromIPFS,
+    saveCurrentPresentation,
+    addToFavorites,
+    removeFromFavorites,
+    getUserHistory,
+    getUserFavorites
   };
 
   return (

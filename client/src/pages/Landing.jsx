@@ -2,11 +2,13 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePresentation } from '../contexts/PresentationContext';
 import { RiFileAddLine, RiStarLine, RiHistoryLine } from 'react-icons/ri';
 
 const Landing = () => {
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { getUserHistory, getUserFavorites } = usePresentation();
   const navigate = useNavigate();
 
   return (
@@ -15,8 +17,10 @@ const Landing = () => {
       <header className="container mx-auto px-6 py-4">
         <nav className="navbar">
           <div className="flex items-center space-x-2">
-            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
-            <span className="text-2xl font-bold nav-title">EtherXPPT</span>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0A500' }}>
+              <span className="text-lg font-bold" style={{ color: '#1B1A17' }}>E</span>
+            </div>
+            <span className="text-2xl font-bold" style={{ color: '#F0A500' }}>EtherXPPT</span>
           </div>
           <div className="flex items-center space-x-3">
             {/* Theme toggle near signup */}
@@ -66,9 +70,9 @@ const Landing = () => {
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in" style={{ color: '#F0A500' }}>
             Create Amazing
-            <span className={isDark ? 'text-white' : 'text-black'}> Presentations</span>
+            <span style={{ color: '#F0A500' }}> Presentations</span>
           </h1>
-          <p className={`text-xl mb-8 animate-slide-in-up ${isDark ? 'text-white' : 'text-black'}`}>
+          <p className="text-xl mb-8 animate-slide-in-up" style={{ color: '#F0A500' }}>
             Professional PowerPoint-like editor with real-time collaboration, 
             modern design tools, and seamless workflow.
           </p>
@@ -92,43 +96,59 @@ const Landing = () => {
         <div className="grid md:grid-cols-3 gap-8 mt-20">
           <button
             onClick={() => navigate('/dashboard')}
-            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
+            className="card-themed p-6 text-center rounded-lg hover:shadow-lg transition-all"
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiFileAddLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>New Presentation</h3>
-            <p className={isDark ? 'text-white' : 'text-black'}>Create and open a new presentation instantly.</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F0A500' }}>New Presentation</h3>
+            <p style={{ color: '#F0A500' }}>Create and open a new presentation instantly.</p>
           </button>
           
           <button
             onClick={() => {
-              if (user) navigate('/dashboard?view=favourites');
+              if (user) {
+                const favorites = getUserFavorites();
+                if (favorites.length > 0) {
+                  navigate('/dashboard?view=favourites');
+                } else {
+                  alert('No favorites yet. Star some presentations to see them here!');
+                }
+              } else {
+                navigate('/login');
+              }
             }}
-            className="panel p-6 text-center animate-zoom-in hover:shadow-glow transition"
-            disabled={!user}
-            title={user ? 'View your favourites' : 'Login required'}
+            className="card-themed p-6 text-center rounded-lg hover:shadow-lg transition-all"
+            title={user ? 'View your favourites' : 'Login to access favourites'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiStarLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Favourites</h3>
-            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F0A500' }}>Favourites</h3>
+            <p style={{ color: '#F0A500' }}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
           </button>
           
           <button
             onClick={() => {
-              if (user) navigate('/dashboard?view=history');
+              if (user) {
+                const history = getUserHistory();
+                if (history.length > 0) {
+                  navigate('/dashboard?view=history');
+                } else {
+                  alert('No history yet. Start creating presentations to see them here!');
+                }
+              } else {
+                navigate('/login');
+              }
             }}
-            className="panel p-6 text-center animate-slide-in-right hover:shadow-glow transition"
-            disabled={!user}
-            title={user ? 'View your history' : 'Login required'}
+            className="card-themed p-6 text-center rounded-lg hover:shadow-lg transition-all"
+            title={user ? 'View your history' : 'Login to access history'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiHistoryLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>History</h3>
-            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F0A500' }}>History</h3>
+            <p style={{ color: '#F0A500' }}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
           </button>
         </div>
 
@@ -140,8 +160,10 @@ const Landing = () => {
       <footer className="py-12 mt-20">
         <div className={`container mx-auto px-6 text-center ${isDark ? 'text-white' : 'text-black'}`}>
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
-            <span className="text-2xl font-bold nav-title">EtherXPPT</span>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0A500' }}>
+              <span className="text-lg font-bold" style={{ color: '#1B1A17' }}>E</span>
+            </div>
+            <span className="text-2xl font-bold" style={{ color: '#F0A500' }}>EtherXPPT</span>
           </div>
           <p className="mb-4">Professional presentation software for modern teams</p>
           <div className="flex justify-center space-x-6">
