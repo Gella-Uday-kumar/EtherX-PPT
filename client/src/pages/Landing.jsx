@@ -17,10 +17,8 @@ const Landing = () => {
       <header className="container mx-auto px-6 py-4">
         <nav className="navbar">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0A500' }}>
-              <span className="text-lg font-bold" style={{ color: '#1B1A17' }}>E</span>
-            </div>
-            <span className="text-2xl font-bold" style={{ color: '#F0A500' }}>EtherXPPT</span>
+            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
+            <span className="text-2xl font-bold nav-title">EtherXPPT</span>
           </div>
           <div className="flex items-center space-x-3">
             {/* Theme toggle near signup */}
@@ -70,9 +68,9 @@ const Landing = () => {
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in" style={{ color: '#F0A500' }}>
             Create Amazing
-            <span style={{ color: '#F0A500' }}> Presentations</span>
+            <span className={isDark ? 'text-white' : 'text-black'}> Presentations</span>
           </h1>
-          <p className="text-xl mb-8 animate-slide-in-up" style={{ color: '#F0A500' }}>
+          <p className={`text-xl mb-8 animate-slide-in-up ${isDark ? 'text-white' : 'text-black'}`}>
             Professional PowerPoint-like editor with real-time collaboration, 
             modern design tools, and seamless workflow.
           </p>
@@ -96,13 +94,13 @@ const Landing = () => {
         <div className="grid md:grid-cols-3 gap-8 mt-20">
           <button
             onClick={() => navigate('/dashboard')}
-            className="card-themed p-6 text-center rounded-lg hover:shadow-lg transition-all"
+            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiFileAddLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F0A500' }}>New Presentation</h3>
-            <p style={{ color: '#F0A500' }}>Create and open a new presentation instantly.</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>New Presentation</h3>
+            <p className={isDark ? 'text-white' : 'text-black'}>Create and open a new presentation instantly.</p>
           </button>
           
           <button
@@ -110,9 +108,9 @@ const Landing = () => {
               if (user) {
                 const favorites = getUserFavorites();
                 if (favorites.length > 0) {
-                  navigate('/dashboard?view=favourites');
+                  navigate('/home?view=favourites');
                 } else {
-                  alert('No favorites yet. Star some presentations to see them here!');
+                  alert('No favorites yet. Star some presentations!');
                 }
               } else {
                 navigate('/login');
@@ -124,8 +122,8 @@ const Landing = () => {
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiStarLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F0A500' }}>Favourites</h3>
-            <p style={{ color: '#F0A500' }}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Favourites</h3>
+            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
           </button>
           
           <button
@@ -133,9 +131,9 @@ const Landing = () => {
               if (user) {
                 const history = getUserHistory();
                 if (history.length > 0) {
-                  navigate('/dashboard?view=history');
+                  navigate('/home?view=history');
                 } else {
-                  alert('No history yet. Start creating presentations to see them here!');
+                  alert('No history yet. Start creating presentations!');
                 }
               } else {
                 navigate('/login');
@@ -147,8 +145,8 @@ const Landing = () => {
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiHistoryLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F0A500' }}>History</h3>
-            <p style={{ color: '#F0A500' }}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>History</h3>
+            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
           </button>
         </div>
 
@@ -160,10 +158,8 @@ const Landing = () => {
       <footer className="py-12 mt-20">
         <div className={`container mx-auto px-6 text-center ${isDark ? 'text-white' : 'text-black'}`}>
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0A500' }}>
-              <span className="text-lg font-bold" style={{ color: '#1B1A17' }}>E</span>
-            </div>
-            <span className="text-2xl font-bold" style={{ color: '#F0A500' }}>EtherXPPT</span>
+            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
+            <span className="text-2xl font-bold nav-title">EtherXPPT</span>
           </div>
           <p className="mb-4">Professional presentation software for modern teams</p>
           <div className="flex justify-center space-x-6">
