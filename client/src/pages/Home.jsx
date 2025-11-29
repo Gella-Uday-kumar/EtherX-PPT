@@ -8,7 +8,6 @@ const Home = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('home');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [recentFiles, setRecentFiles] = useState([]);
   const [pinnedFiles, setPinnedFiles] = useState([]);
@@ -53,13 +52,23 @@ const Home = () => {
 
   const handleCreateNew = (templateId = null) => {
     const template = templateId ? templates[templateId] : null;
-    
+
     if (template && template.slides) {
-      localStorage.setItem('selectedTemplate', JSON.stringify(template));
+      // Generate unique IDs for slides to avoid conflicts
+      const baseId = Date.now();
+      const slidesWithUniqueIds = template.slides.map((slide, index) => ({
+        ...slide,
+        id: baseId + index
+      }));
+      const templateWithUniqueIds = {
+        ...template,
+        slides: slidesWithUniqueIds
+      };
+      localStorage.setItem('selectedTemplate', JSON.stringify(templateWithUniqueIds));
     } else {
       localStorage.removeItem('selectedTemplate');
     }
-    
+
     navigate('/dashboard');
   };
 
@@ -134,28 +143,14 @@ const Home = () => {
                 <h1 className="text-xl font-semibold" style={{ color: '#F0A500' }}>PowerPoint</h1>
               </div>
               
-              {/* Navigation Tabs */}
+              {/* Navigation */}
               <nav className="flex space-x-8">
                 <button
-                  onClick={() => setActiveTab('home')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'home' ? 'border-b-2' : 'hover:opacity-80'}`}
-                  style={{ color: '#F0A500', borderColor: activeTab === 'home' ? '#F0A500' : 'transparent' }}
+                  onClick={() => navigate('/dashboard')}
+                  className="px-3 py-2 text-sm font-medium hover:opacity-80"
+                  style={{ color: '#F0A500' }}
                 >
-                  Home
-                </button>
-                <button
-                  onClick={() => setActiveTab('new')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'new' ? 'border-b-2' : 'hover:opacity-80'}`}
-                  style={{ color: '#F0A500', borderColor: activeTab === 'new' ? '#F0A500' : 'transparent' }}
-                >
-                  New
-                </button>
-                <button
-                  onClick={() => setActiveTab('open')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'open' ? 'border-b-2' : 'hover:opacity-80'}`}
-                  style={{ color: '#F0A500', borderColor: activeTab === 'open' ? '#F0A500' : 'transparent' }}
-                >
-                  Open
+                  Dashboard
                 </button>
               </nav>
             </div>
@@ -233,278 +228,173 @@ const Home = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'home' && (
-          <>
-            {/* Quick Actions */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold" style={{ color: '#F0A500' }}>Start a new presentation</h2>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleOpenFile}
-                    className="px-4 py-2 rounded-lg transition-colors"
-                    style={{ backgroundColor: '#F0A500', color: '#000000' }}
-                  >
-                    Open File
-                  </button>
-                  <button
-                    onClick={() => handleCreateNew()}
-                    className="px-4 py-2 rounded-lg transition-colors border bg-transparent hover:text-black"
-                    style={{ color: '#F0A500', borderColor: '#F0A500' }}
-                  >
-                    New Blank
-                  </button>
+        {/* Featured Templates */}
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold mb-8" style={{ color: '#F0A500' }}>Create a new presentation</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Blank Presentation */}
+            <div
+              onClick={() => handleCreateNew()}
+              className="cursor-pointer group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 overflow-hidden"
+            >
+              <div className="aspect-[4/3] bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <p className="text-lg font-semibold" style={{ color: '#F0A500' }}>Blank Presentation</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Start from scratch</p>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {/* Blank Presentation */}
-                <div 
-                  onClick={() => handleCreateNew()}
-                  className="cursor-pointer group"
+            </div>
+
+            {/* Template Previews */}
+            {filteredTemplates.slice(1, 4).map((template) => {
+              const bgColor = template.slides?.[0]?.background || '#4F46E5';
+              return (
+                <div
+                  key={template.id}
+                  onClick={() => handleCreateNew(template.id)}
+                  className="cursor-pointer group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                  title={template.description}
                 >
-                  <div className="aspect-[4/3] bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center hover:border-blue-500 transition-colors">
-                    <div className="text-center">
-                      <svg className="w-12 h-12 mx-auto text-gray-400 group-hover:text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
-                      </svg>
-                      <p className="text-sm" style={{ color: '#F0A500' }}>Blank</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Template Previews */}
-                {filteredTemplates.slice(1, 6).map((template) => {
-                  const bgColor = template.slides?.[0]?.background || '#4F46E5';
-                  return (
-                    <div 
-                      key={template.id}
-                      onClick={() => handleCreateNew(template.id)}
-                      className="cursor-pointer group"
-                      title={template.description}
-                    >
-                      <div className="aspect-[4/3] rounded-lg overflow-hidden hover:shadow-lg transition-shadow" style={{ background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)` }}>
-                        <div className="w-full h-full flex items-center justify-center text-white">
-                          <div className="text-center">
-                            <div className="w-8 h-8 mx-auto mb-2 bg-white/20 rounded"></div>
-                            <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-1"></div>
-                            <div className="w-8 h-1 mx-auto bg-white/30 rounded"></div>
-                            <div className="text-xs mt-1 opacity-75">{template.slides?.length || 1} slides</div>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm mt-2 text-center" style={{ color: '#F0A500' }}>{template.name}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Pinned Files */}
-            {pinnedFiles.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold" style={{ color: '#F0A500' }}>Pinned</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {pinnedFiles.map((file) => (
-                    <div 
-                      key={file.id}
-                      className="cursor-pointer rounded-lg border hover:shadow-md transition-shadow p-4 group bg-white dark:bg-black"
-                      style={{ borderColor: '#F0A500' }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3 flex-1" onClick={() => navigate('/dashboard')}>
-                          <div className="w-12 h-9 bg-gradient-to-br from-orange-400 to-red-500 rounded flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate" style={{ color: '#F0A500' }}>{file.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(file.modified).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleUnpinFile(file.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Unpin"
-                        >
-                          📌
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent Files */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold" style={{ color: '#F0A500' }}>Recent</h2>
-                <button 
-                  onClick={() => setActiveTab('open')}
-                  className="text-sm hover:opacity-80"
-                  style={{ color: '#F0A500' }}
-                >
-                  See all
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {recentFiles.slice(0, 8).map((file) => (
-                  <div 
-                    key={file.id}
-                    className="cursor-pointer bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow p-4 group"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3 flex-1" onClick={() => navigate('/dashboard')}>
-                        <div className="w-12 h-9 bg-gradient-to-br from-orange-400 to-red-500 rounded flex items-center justify-center">
-                          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(file.modified).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 flex space-x-1">
-                        <button
-                          onClick={() => handlePinFile(file.id)}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Pin"
-                        >
-                          📌
-                        </button>
-                        <button
-                          onClick={() => handleShareFile(file.id)}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Share"
-                        >
-                          🔗
-                        </button>
-                        <button
-                          onClick={() => handleDeleteFile(file.id)}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-500"
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
+                  <div className="aspect-[4/3] overflow-hidden" style={{ background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)` }}>
+                    <div className="w-full h-full flex items-center justify-center text-white p-6">
+                      <div className="text-center">
+                        <div className="w-12 h-8 mx-auto mb-3 bg-white/20 rounded"></div>
+                        <div className="w-16 h-1 mx-auto bg-white/30 rounded mb-1"></div>
+                        <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-1"></div>
+                        <div className="w-14 h-1 mx-auto bg-white/30 rounded"></div>
+                        <div className="text-sm mt-3 opacity-90 font-medium">{template.slides?.length || 1} slides</div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'new' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-6" style={{ color: '#F0A500' }}>Choose a template</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {filteredTemplates.map((template) => {
-                const bgColor = template.slides?.[0]?.background || '#4F46E5';
-                return (
-                  <div 
-                    key={template.id}
-                    onClick={() => handleCreateNew(template.id)}
-                    className="cursor-pointer group"
-                  >
-                    <div className="aspect-[4/3] rounded-lg overflow-hidden hover:shadow-lg transition-shadow mb-3" style={{ background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)` }}>
-                      <div className="w-full h-full flex items-center justify-center text-white p-4">
-                        <div className="text-center">
-                          <div className="w-12 h-8 mx-auto mb-2 bg-white/20 rounded"></div>
-                          <div className="w-16 h-1 mx-auto bg-white/30 rounded mb-1"></div>
-                          <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-1"></div>
-                          <div className="w-14 h-1 mx-auto bg-white/30 rounded"></div>
-                          <div className="text-xs mt-2 opacity-75">{template.slides?.length || 1} slides</div>
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">{template.name}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{template.description}</p>
-                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                      {template.category}
-                    </span>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{template.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{template.category}</p>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-        )}
 
-        {activeTab === 'open' && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold" style={{ color: '#F0A500' }}>Open a file</h2>
-              <button
-                onClick={handleOpenFile}
-                className="px-4 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: '#F0A500', color: '#000000' }}
+          {/* More Templates Link */}
+          <div className="text-center">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center px-6 py-3 rounded-lg transition-colors text-white hover:opacity-90"
+              style={{ backgroundColor: '#F0A500' }}
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              Browse All Templates
+            </button>
+          </div>
+        </div>
+
+        {/* Recent Presentations */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold" style={{ color: '#F0A500' }}>Recent presentations</h2>
+            <button
+              onClick={handleOpenFile}
+              className="px-4 py-2 rounded-lg transition-colors"
+              style={{ backgroundColor: '#F0A500', color: '#000000' }}
+            >
+              Open from file
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recentFiles.slice(0, 6).map((file) => (
+              <div
+                key={file.id}
+                onClick={() => navigate('/dashboard')}
+                className="cursor-pointer bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 p-6 group"
               >
-                Browse Files
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-4" style={{ color: '#F0A500' }}>Recent files</h3>
-                <div className="space-y-2">
-                  {recentFiles.map((file) => (
-                    <div 
-                      key={file.id}
-                      onClick={() => navigate('/dashboard')}
-                      className="cursor-pointer flex items-center space-x-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow group"
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate mb-1">{file.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Modified {new Date(file.modified).toLocaleDateString()}</p>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 flex space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePinFile(file.id);
+                      }}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      title="Pin"
                     >
-                      <div className="w-10 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded flex items-center justify-center">
-                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Modified {new Date(file.modified).toLocaleDateString()}</p>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 flex space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePinFile(file.id);
-                          }}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Pin"
-                        >
-                          📌
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShareFile(file.id);
-                          }}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Share"
-                        >
-                          🔗
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteFile(file.id);
-                          }}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-500"
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      📌
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareFile(file.id);
+                      }}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      title="Share"
+                    >
+                      🔗
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {recentFiles.length === 0 && (
+            <div className="text-center py-12">
+              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No recent presentations</h3>
+              <p className="text-gray-600 dark:text-gray-400">Create your first presentation to get started</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pinned Files */}
+        {pinnedFiles.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6" style={{ color: '#F0A500' }}>Pinned</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pinnedFiles.map((file) => (
+                <div
+                  key={file.id}
+                  onClick={() => navigate('/dashboard')}
+                  className="cursor-pointer bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 p-6 group"
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate mb-1">{file.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Modified {new Date(file.modified).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnpinFile(file.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      title="Unpin"
+                    >
+                      📌
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

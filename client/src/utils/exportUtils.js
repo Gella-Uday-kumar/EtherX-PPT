@@ -1,5 +1,7 @@
 // Enhanced export utilities with comprehensive format support
 import PptxGenJS from 'pptxgenjs';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Function to generate a sample PowerPoint presentation with all features
 export const generateSamplePresentation = async (filename = 'EtherXPPT_Sample') => {
@@ -211,12 +213,49 @@ const exportToPowerPoint = async (slides, filename) => {
   pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 5.625 });
   pptx.layout = 'CUSTOM';
 
+  // Load logo as base64
+  let logoData = null;
+  try {
+    const logoResponse = await fetch('/DOCS-LOGO-final-transparent.png');
+    if (!logoResponse.ok) {
+      throw new Error(`HTTP error! status: ${logoResponse.status}`);
+    }
+    const logoBlob = await logoResponse.blob();
+    logoData = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read logo file'));
+      reader.readAsDataURL(logoBlob);
+    });
+    console.log('Logo loaded successfully for PowerPoint export');
+  } catch (error) {
+    console.error('Could not load logo for PowerPoint export:', error);
+  }
+
   for (const slideData of slides) {
     const slide = pptx.addSlide();
 
     // Set slide background
     if (slideData.background && slideData.background !== '#ffffff') {
       slide.background = { color: slideData.background };
+    }
+
+    // Add logo to each slide (top-right corner)
+    if (logoData) {
+      try {
+        slide.addImage({
+          data: logoData,
+          x: 8.0,
+          y: 0.1,
+          w: 1.5,
+          h: 0.8
+        });
+        console.log('Logo added to slide successfully');
+      } catch (error) {
+        console.error('Failed to add logo to slide:', error);
+      }
+    } else {
+      console.warn('Logo data not available for slide');
     }
 
     // Add header/footer if present
@@ -514,8 +553,7 @@ const exportToPowerPoint = async (slides, filename) => {
 
 const exportToPDF = async (slides, filename) => {
   try {
-    const { jsPDF } = await import('jspdf');
-    const html2canvas = (await import('html2canvas')).default;
+    console.log('Starting PDF export...');
 
     const pdf = new jsPDF({
       orientation: 'landscape',
@@ -523,93 +561,249 @@ const exportToPDF = async (slides, filename) => {
       format: 'a4'
     });
 
+    // Load logo
+    let logoImg = null;
+    try {
+      const logoResponse = await fetch('/DOCS-LOGO-final-transparent.png');
+      if (!logoResponse.ok) {
+        console.warn('Logo fetch failed, continuing without logo');
+      } else {
+        const logoBlob = await logoResponse.blob();
+        logoImg = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Failed to read logo file'));
+          reader.readAsDataURL(logoBlob);
+        });
+        console.log('Logo loaded successfully for PDF export');
+      }
+    } catch (error) {
+      console.warn('Could not load logo for PDF export, continuing without logo:', error);
+    }
+
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i];
+      console.log(`Processing slide ${i + 1}/${slides.length}`);
 
-      // Create a temporary div to render the slide
-      const tempDiv = document.createElement('div');
-      tempDiv.style.width = '11.69in'; // A4 landscape width
-      tempDiv.style.height = '8.27in'; // A4 landscape height
-      tempDiv.style.backgroundColor = slide.background || '#ffffff';
-      tempDiv.style.color = slide.textColor || '#000000';
-      tempDiv.style.padding = '0.5in';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.zIndex = '-1';
+      try {
+        // Create a temporary div to render the slide
+        const tempDiv = document.createElement('div');
+        tempDiv.style.width = '11.69in'; // A4 landscape width
+        tempDiv.style.height = '8.27in'; // A4 landscape height
+        tempDiv.style.backgroundColor = slide.background || '#ffffff';
+        tempDiv.style.color = slide.textColor || '#000000';
+        tempDiv.style.padding = '0.5in';
+        tempDiv.style.fontFamily = 'Arial, sans-serif';
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        tempDiv.style.zIndex = '-1';
+        tempDiv.style.boxSizing = 'border-box';
 
-      // Add title
-      if (slide.title) {
-        const titleDiv = document.createElement('div');
-        titleDiv.style.fontSize = '36px';
-        titleDiv.style.fontWeight = 'bold';
-        titleDiv.style.textAlign = 'center';
-        titleDiv.style.marginBottom = '0.5in';
-        titleDiv.textContent = slide.title;
-        tempDiv.appendChild(titleDiv);
+        // Add title
+        if (slide.title) {
+          const titleDiv = document.createElement('div');
+          titleDiv.style.fontSize = '36px';
+          titleDiv.style.fontWeight = 'bold';
+          titleDiv.style.textAlign = 'center';
+          titleDiv.style.marginBottom = '0.5in';
+          titleDiv.style.lineHeight = '1.2';
+          titleDiv.textContent = slide.title.replace(/<[^>]*>/g, '');
+          tempDiv.appendChild(titleDiv);
+        }
+
+        // Add content
+        if (slide.content) {
+          const contentDiv = document.createElement('div');
+          contentDiv.style.fontSize = '24px';
+          contentDiv.style.lineHeight = '1.4';
+          contentDiv.innerHTML = slide.content.replace(/<[^>]*>/g, '').replace(/\n/g, '<br>');
+          tempDiv.appendChild(contentDiv);
+        }
+
+        // Handle different layouts
+        if (slide.layout === 'two-column') {
+          tempDiv.innerHTML = '';
+          const container = document.createElement('div');
+          container.style.display = 'flex';
+          container.style.gap = '0.5in';
+          container.style.height = '100%';
+
+          const leftCol = document.createElement('div');
+          leftCol.style.flex = '1';
+          leftCol.style.fontSize = '20px';
+          leftCol.style.lineHeight = '1.4';
+          leftCol.innerHTML = slide.contentLeft ? slide.contentLeft.replace(/<[^>]*>/g, '').replace(/\n/g, '<br>') : '';
+
+          const rightCol = document.createElement('div');
+          rightCol.style.flex = '1';
+          rightCol.style.fontSize = '20px';
+          rightCol.style.lineHeight = '1.4';
+          rightCol.innerHTML = slide.contentRight ? slide.contentRight.replace(/<[^>]*>/g, '').replace(/\n/g, '<br>') : '';
+
+          container.appendChild(leftCol);
+          container.appendChild(rightCol);
+          tempDiv.appendChild(container);
+        }
+
+        // Handle comparison layout
+        if (slide.layout === 'comparison') {
+          tempDiv.innerHTML = '';
+          const container = document.createElement('div');
+          container.style.display = 'flex';
+          container.style.flexDirection = 'column';
+          container.style.height = '100%';
+          container.style.gap = '0.3in';
+
+          // Left side
+          const leftSection = document.createElement('div');
+          leftSection.style.flex = '1';
+          leftSection.style.display = 'flex';
+          leftSection.style.flexDirection = 'column';
+
+          if (slide.compLeftTitle) {
+            const leftTitle = document.createElement('div');
+            leftTitle.style.fontSize = '28px';
+            leftTitle.style.fontWeight = 'bold';
+            leftTitle.style.textAlign = 'center';
+            leftTitle.style.marginBottom = '0.2in';
+            leftTitle.textContent = slide.compLeftTitle.replace(/<[^>]*>/g, '');
+            leftSection.appendChild(leftTitle);
+          }
+
+          if (slide.compLeftContent) {
+            const leftContent = document.createElement('div');
+            leftContent.style.fontSize = '18px';
+            leftContent.style.lineHeight = '1.4';
+            leftContent.innerHTML = slide.compLeftContent.replace(/<[^>]*>/g, '').replace(/\n/g, '<br>');
+            leftSection.appendChild(leftContent);
+          }
+
+          // Right side
+          const rightSection = document.createElement('div');
+          rightSection.style.flex = '1';
+          rightSection.style.display = 'flex';
+          rightSection.style.flexDirection = 'column';
+
+          if (slide.compRightTitle) {
+            const rightTitle = document.createElement('div');
+            rightTitle.style.fontSize = '28px';
+            rightTitle.style.fontWeight = 'bold';
+            rightTitle.style.textAlign = 'center';
+            rightTitle.style.marginBottom = '0.2in';
+            rightTitle.textContent = slide.compRightTitle.replace(/<[^>]*>/g, '');
+            rightSection.appendChild(rightTitle);
+          }
+
+          if (slide.compRightContent) {
+            const rightContent = document.createElement('div');
+            rightContent.style.fontSize = '18px';
+            rightContent.style.lineHeight = '1.4';
+            rightContent.innerHTML = slide.compRightContent.replace(/<[^>]*>/g, '').replace(/\n/g, '<br>');
+            rightSection.appendChild(rightContent);
+          }
+
+          container.appendChild(leftSection);
+          container.appendChild(rightSection);
+          tempDiv.appendChild(container);
+        }
+
+        document.body.appendChild(tempDiv);
+
+        // Convert to canvas with error handling
+        let canvas;
+        try {
+          canvas = await html2canvas(tempDiv, {
+            width: 1400,
+            height: 990,
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: slide.background || '#ffffff'
+          });
+          console.log(`Canvas created for slide ${i + 1}`);
+        } catch (canvasError) {
+          console.error(`Canvas creation failed for slide ${i + 1}:`, canvasError);
+          // Create a fallback canvas
+          canvas = document.createElement('canvas');
+          canvas.width = 1400;
+          canvas.height = 990;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = slide.background || '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = slide.textColor || '#000000';
+          ctx.font = 'bold 48px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(slide.title || `Slide ${i + 1}`, canvas.width / 2, 150);
+          ctx.font = '32px Arial';
+          const lines = (slide.content || '').replace(/<[^>]*>/g, '').split('\n');
+          lines.forEach((line, index) => {
+            ctx.fillText(line, canvas.width / 2, 250 + (index * 50));
+          });
+        }
+
+        // Remove temp div
+        if (tempDiv.parentNode) {
+          document.body.removeChild(tempDiv);
+        }
+
+        // Add logo to canvas if available
+        if (logoImg) {
+          try {
+            const logoCanvas = document.createElement('canvas');
+            logoCanvas.width = 100;
+            logoCanvas.height = 50;
+            const logoCtx = logoCanvas.getContext('2d');
+
+            const logoImage = new Image();
+            logoImage.crossOrigin = 'anonymous';
+            logoImage.src = logoImg;
+
+            await new Promise((resolve, reject) => {
+              logoImage.onload = () => {
+                logoCtx.drawImage(logoImage, 0, 0, 100, 50);
+                resolve();
+              };
+              logoImage.onerror = () => reject(new Error('Logo image load failed'));
+              // Timeout after 5 seconds
+              setTimeout(() => reject(new Error('Logo load timeout')), 5000);
+            });
+
+            // Draw logo on main canvas (top-right corner)
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(logoCanvas, canvas.width - 120, 20, 100, 50);
+            console.log('Logo added to slide canvas');
+          } catch (logoError) {
+            console.warn('Failed to add logo to canvas, continuing without logo:', logoError);
+          }
+        }
+
+        // Add to PDF
+        const imgData = canvas.toDataURL('image/png');
+        if (i > 0) {
+          pdf.addPage();
+        }
+        pdf.addImage(imgData, 'PNG', 0, 0, 11.69, 8.27);
+        console.log(`Slide ${i + 1} added to PDF`);
+
+      } catch (slideError) {
+        console.error(`Failed to process slide ${i + 1}:`, slideError);
+        // Continue with next slide instead of failing completely
+        continue;
       }
-
-      // Add content
-      if (slide.content) {
-        const contentDiv = document.createElement('div');
-        contentDiv.style.fontSize = '24px';
-        contentDiv.style.lineHeight = '1.4';
-        contentDiv.innerHTML = slide.content.replace(/\n/g, '<br>');
-        tempDiv.appendChild(contentDiv);
-      }
-
-      // Handle different layouts
-      if (slide.layout === 'two-column') {
-        tempDiv.innerHTML = '';
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.gap = '0.5in';
-
-        const leftCol = document.createElement('div');
-        leftCol.style.flex = '1';
-        leftCol.innerHTML = slide.contentLeft ? slide.contentLeft.replace(/\n/g, '<br>') : '';
-
-        const rightCol = document.createElement('div');
-        rightCol.style.flex = '1';
-        rightCol.innerHTML = slide.contentRight ? slide.contentRight.replace(/\n/g, '<br>') : '';
-
-        container.appendChild(leftCol);
-        container.appendChild(rightCol);
-        tempDiv.appendChild(container);
-      }
-
-      document.body.appendChild(tempDiv);
-
-      // Convert to canvas
-      const canvas = await html2canvas(tempDiv, {
-        width: 1400,
-        height: 990,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true
-      });
-
-      // Remove temp div
-      document.body.removeChild(tempDiv);
-
-      // Add to PDF
-      const imgData = canvas.toDataURL('image/png');
-      if (i > 0) {
-        pdf.addPage();
-      }
-      pdf.addImage(imgData, 'PNG', 0, 0, 11.69, 8.27);
     }
 
     // Save the PDF
     pdf.save(`${filename}.pdf`);
-    console.log('PDF export completed');
+    console.log('PDF export completed successfully');
+
   } catch (error) {
     console.error('PDF export failed:', error);
     // Fallback to JSON export
-    const data = JSON.stringify({ slides, format: 'pdf' });
+    const data = JSON.stringify({ slides, format: 'pdf', error: error.message });
     downloadFile(data, `${filename}.pdf`, 'application/pdf');
     console.log('PDF export failed, falling back to JSON');
+    throw error; // Re-throw to trigger proper error handling
   }
 };
 
@@ -621,10 +815,81 @@ const exportToODP = async (slides, filename) => {
 };
 
 const exportToWord = async (slides, filename) => {
-  // Export as Word document with slides and notes
-  const data = JSON.stringify({ slides, format: 'docx' });
-  downloadFile(data, `${filename}.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  console.log('Word export completed');
+  try {
+    // Load logo
+    let logoData = null;
+    try {
+      const logoResponse = await fetch('/DOCS-LOGO-final-transparent.png');
+      if (!logoResponse.ok) {
+        throw new Error(`HTTP error! status: ${logoResponse.status}`);
+      }
+      const logoBlob = await logoResponse.blob();
+      logoData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read logo file'));
+        reader.readAsDataURL(logoBlob);
+      });
+      console.log('Logo loaded successfully for Word export');
+    } catch (error) {
+      console.error('Could not load logo for Word export:', error);
+    }
+
+    // Create clean HTML content without CSS styles (Word will handle formatting)
+    let htmlContent = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+  <meta charset="utf-8">
+  <title>${filename}</title>
+  <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotPromoteQF/><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
+</head>
+<body>`;
+
+    // Add logo at the top if available
+    if (logoData) {
+      htmlContent += `<div style="text-align: center; margin-bottom: 20pt;"><img src="${logoData}" style="width: 120pt; height: 60pt;" alt="EtherX Logo" /></div>`;
+    }
+
+    // Add presentation title
+    htmlContent += `<div style="font-size: 28pt; font-weight: bold; text-align: center; margin-bottom: 40pt; page-break-after: always;">${filename}</div>`;
+
+    // Add each slide with clean formatting
+    slides.forEach((slide, index) => {
+      htmlContent += `
+  <div style="page-break-before: always;">
+    <div style="font-size: 24pt; font-weight: bold; text-align: center; margin-bottom: 20pt;">${slide.title || `Slide ${index + 1}`}</div>
+    <div style="font-size: 14pt; line-height: 1.5; margin-bottom: 30pt;">${(slide.content || '').replace(/<[^>]*>/g, '').replace(/\n/g, '<br>')}</div>
+    <div style="font-size: 10pt; text-align: right; color: #666; margin-top: 20pt;">Slide ${index + 1}</div>
+  </div>`;
+    });
+
+    htmlContent += `
+</body>
+</html>`;
+
+    // Create a Blob with the HTML content
+    const blob = new Blob([htmlContent], {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log('Word export completed');
+  } catch (error) {
+    console.error('Word export failed:', error);
+    // Fallback to JSON export
+    const data = JSON.stringify({ slides, format: 'docx' });
+    downloadFile(data, `${filename}.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    console.log('Word export failed, falling back to JSON');
+  }
 };
 
 const exportToRTF = async (slides, filename) => {

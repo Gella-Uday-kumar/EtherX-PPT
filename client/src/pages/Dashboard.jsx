@@ -36,6 +36,181 @@ import VersionHistory from '../components/VersionHistory';
 import { exportToJSON, exportPresentation, generateSamplePresentation } from '../utils/exportUtils';
 import { handleFileImport } from '../utils/importUtils';
 
+// Custom print function to print all slides in PowerPoint-like handout layout (6 slides per page)
+const printSlide = async (slides, currentSlideIndex, presentationMeta, options = {}) => {
+  const {
+    orientation = 'portrait',
+    paperSize = 'A4',
+    slidesPerPage = 6
+  } = options;
+
+  try {
+    if (!slides || slides.length === 0) {
+      alert('No slides to print');
+      return;
+    }
+
+    // Load logo
+    let logoData = null;
+    try {
+      const logoResponse = await fetch('/DOCS-LOGO-final-transparent.png');
+      if (!logoResponse.ok) {
+        throw new Error(`HTTP error! status: ${logoResponse.status}`);
+      }
+      const logoBlob = await logoResponse.blob();
+      logoData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read logo file'));
+        reader.readAsDataURL(logoBlob);
+      });
+      console.log('Logo loaded successfully for print');
+    } catch (error) {
+      console.error('Could not load logo for print:', error);
+    }
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (!printWindow) {
+      alert('Please allow popups for printing');
+      return;
+    }
+
+    // Print styles for multiple slides per page - PowerPoint-like layout
+    const pageSize = paperSize === 'A4' ? 'A4' : paperSize === 'Letter' ? 'letter' : 'A4';
+    const pageOrientation = orientation === 'landscape' ? 'landscape' : 'portrait';
+
+    // Generate slides HTML - group slides into pages
+    const generateSlidesHtml = () => {
+      const pages = [];
+      for (let i = 0; i < slides.length; i += slidesPerPage) {
+        const pageSlides = slides.slice(i, i + slidesPerPage);
+        const slideHtml = pageSlides.map((slide, index) => {
+          const slideIndex = i + index;
+          const titleHtml = slide.title ?
+            `<div style="position:absolute;top:10%;left:5%;right:5%;font-size:12px;font-weight:bold;color:${slide.textColor || '#000000'};text-align:center;line-height:1.1;">${slide.title}</div>` : '';
+
+          const contentHtml = slide.content ?
+            `<div style="position:absolute;top:35%;left:5%;right:5%;bottom:20%;font-size:8px;color:${slide.textColor || '#000000'};line-height:1.2;overflow:hidden;">${slide.content.replace(/<[^>]*>/g, '').substring(0, 150)}${slide.content.replace(/<[^>]*>/g, '').length > 150 ? '...' : ''}</div>` : '';
+
+          const slideNumberHtml = `<div style="position:absolute;bottom:5%;right:5%;font-size:8px;color:#666;font-weight:bold;">${slideIndex + 1}</div>`;
+
+          return `
+            <div class="slide-mini" style="background: ${slide.background || '#ffffff'}; border: 1px solid #ccc;">
+              ${titleHtml}
+              ${contentHtml}
+              ${slideNumberHtml}
+            </div>
+          `;
+        }).join('');
+
+        pages.push(`
+          <div class="print-page">
+            ${slideHtml}
+          </div>
+        `);
+      }
+      return pages.join('');
+    };
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Print Presentation - ${presentationMeta.title || 'Presentation'}</title>
+          <style>
+            @media print {
+              @page { size: ${pageSize} ${pageOrientation}; margin: 0.5in; }
+              body {
+                margin: 0; padding: 0; background: white;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                font-family: Arial, sans-serif;
+              }
+              .print-page {
+                page-break-after: always;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 0.2in;
+                height: calc(100vh - 1in);
+                margin-bottom: 0.5in;
+              }
+              .print-page:last-child {
+                page-break-after: avoid;
+              }
+              .slide-mini {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                box-sizing: border-box;
+                border-radius: 4px;
+                overflow: hidden;
+              }
+              * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box; }
+            }
+            @media screen {
+              body {
+                margin: 0; padding: 20px; background: white; font-family: Arial, sans-serif;
+              }
+              .print-page {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 10px;
+                height: 800px;
+                margin-bottom: 20px;
+                border: 1px solid #ccc;
+                padding: 10px;
+              }
+              .slide-mini {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                box-sizing: border-box;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                overflow: hidden;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${logoData ? `<div style="text-align:center;margin-bottom:20px;"><img src="${logoData}" style="width:120px;height:60px;" alt="EtherX Logo" /></div>` : ''}
+          <div style="text-align:center;margin-bottom:20px;font-size:18px;font-weight:bold;">${presentationMeta.title || 'Presentation'}</div>
+          ${generateSlidesHtml()}
+        </body>
+      </html>
+    `;
+
+    // Write content and print
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    // Print after content loads
+    printWindow.onload = () => {
+      setTimeout(() => {
+        try {
+          printWindow.print();
+          // Close window after print dialog
+          setTimeout(() => {
+            if (!printWindow.closed) {
+              printWindow.close();
+            }
+          }, 500);
+        } catch (error) {
+          console.error('Print failed:', error);
+          alert('Print failed. Please try again.');
+        }
+      }, 200);
+    };
+
+  } catch (error) {
+    console.error('Print failed:', error);
+    alert('Print failed. Please try again or use browser print (Ctrl+P).');
+  }
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -63,6 +238,7 @@ const Dashboard = () => {
   const [showFavourites, setShowFavourites] = useState(false);
   const [showShapeSelector, setShowShapeSelector] = useState(false);
   const [showIconSelector, setShowIconSelector] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [showGridlines, setShowGridlines] = useState(true);
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -71,6 +247,7 @@ const Dashboard = () => {
   const [activeRibbonTab, setActiveRibbonTab] = useState('File');
   const [undoHistory, setUndoHistory] = useState([]);
   const [redoHistory, setRedoHistory] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
 
   const location = useLocation();
 
@@ -457,8 +634,8 @@ const Dashboard = () => {
                 </div>
 
                 <div className="text-center">
-                  <button 
-                    onClick={() => window.print()}
+                  <button
+                    onClick={() => setShowPrintDialog(true)}
                     className="flex flex-col items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                   >
                     <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,17 +646,17 @@ const Dashboard = () => {
                 </div>
 
                 <div className="text-center relative">
-                  <button 
+                  <button
                     onClick={() => setShowExportMenu(!showExportMenu)}
                     className="flex flex-col items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                    data-export-btn
+                    disabled={isExporting}
                   >
                     <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <span className="text-xs">Export</span>
+                    <span className="text-xs">{isExporting ? 'Exporting...' : 'Export'}</span>
                   </button>
-                  <ExportMenu 
+                  <ExportMenu
                     isOpen={showExportMenu}
                     onClose={() => setShowExportMenu(false)}
                     onExport={async (format) => {
@@ -488,33 +665,32 @@ const Dashboard = () => {
                           alert('No slides to export. Please create some content first.');
                           return;
                         }
-                        
+
                         const filename = presentationMeta.title || 'presentation';
                         console.log(`Starting export as ${format}...`);
-                        
-                        // Show loading state
-                        const originalText = document.querySelector('[data-export-btn]')?.textContent;
-                        if (document.querySelector('[data-export-btn]')) {
-                          document.querySelector('[data-export-btn]').textContent = 'Exporting...';
-                        }
-                        
-                        await exportPresentation(slides, format, filename);
-                        
-                        // Reset button text
-                        if (document.querySelector('[data-export-btn]')) {
-                          document.querySelector('[data-export-btn]').textContent = originalText;
-                        }
-                        
-                        console.log('Successfully exported as:', format);
-                        alert(`Successfully exported as ${format.toUpperCase()}!`);
+
+                        // Set loading state
+                        setIsExporting(true);
+
+                        // Use setTimeout to prevent UI blocking
+                        setTimeout(async () => {
+                          try {
+                            await exportPresentation(slides, format, filename);
+                            console.log('Successfully exported as:', format);
+                            alert(`Successfully exported as ${format.toUpperCase()}!`);
+                          } catch (error) {
+                            console.error('Export failed:', error);
+                            alert('Export failed: ' + error.message);
+                          } finally {
+                            // Always reset loading state
+                            setIsExporting(false);
+                          }
+                        }, 100);
+
                       } catch (error) {
-                        console.error('Export failed:', error);
-                        alert('Export failed: ' + error.message);
-                        
-                        // Reset button text on error
-                        if (document.querySelector('[data-export-btn]')) {
-                          document.querySelector('[data-export-btn]').textContent = 'Export';
-                        }
+                        console.error('Export setup failed:', error);
+                        alert('Export setup failed: ' + error.message);
+                        setIsExporting(false);
                       }
                     }}
                   />
@@ -823,11 +999,28 @@ const Dashboard = () => {
               <div className="flex flex-col items-center">
                 <div className="flex items-center space-x-1">
                   <div className="grid grid-cols-4 gap-1">
-                    {[{bg:'#1B1A17',text:'#F0A500'},{bg:'#0b132b',text:'#e0e6f1'},{bg:'#0f1f14',text:'#e6f2ea'},{bg:'#2d1b69',text:'#e8e3ff'}].map((theme,i) => (
+                    {[
+                      {name:'Office', colors:['#FFFFFF','#000000','#4472C4','#ED7D31']},
+                      {name:'Facet', colors:['#FFFFFF','#000000','#70AD47','#4472C4']},
+                      {name:'Integral', colors:['#FFFFFF','#000000','#A5A5A5','#4472C4']},
+                      {name:'Ion', colors:['#FFFFFF','#000000','#ED7D31','#4472C4']}
+                    ].map((theme,i) => (
                       <button key={i} onClick={() => {
-                        const updatedSlides = slides.map(slide => ({...slide, background: theme.bg, textColor: theme.text}));
+                        saveToHistory();
+                        const updatedSlides = slides.map(slide => ({
+                          ...slide,
+                          background: theme.colors[0],
+                          textColor: theme.colors[1],
+                          theme: theme.name,
+                          accentColors: theme.colors.slice(2)
+                        }));
                         setSlides(updatedSlides);
-                      }} className="w-8 h-6 rounded border-2 border-gray-300" style={{backgroundColor: theme.bg}}></button>
+                        setPresentationMeta({ ...presentationMeta, themePreset: theme.name, updatedAt: new Date().toISOString() });
+                      }} className="w-8 h-6 rounded border-2 border-gray-300 flex" title={theme.name}>
+                        {theme.colors.slice(0,4).map((color,j) => (
+                          <div key={j} className="flex-1" style={{backgroundColor: color}}></div>
+                        ))}
+                      </button>
                     ))}
                   </div>
                   <button onClick={() => setShowThemePicker(true)} className="flex flex-col items-center p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
@@ -844,9 +1037,11 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-1">
                   {['light','dark'].map(variant => (
                     <button key={variant} onClick={() => {
+                      saveToHistory();
                       const bg = variant === 'dark' ? '#1a1a1a' : '#ffffff';
                       const text = variant === 'dark' ? '#ffffff' : '#000000';
                       updateSlide(currentSlide, { background: bg, textColor: text });
+                      setPresentationMeta({ ...presentationMeta, variant: variant, updatedAt: new Date().toISOString() });
                     }} className={`w-12 h-8 rounded border text-xs ${variant === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black border-gray-300'}`}>
                       {variant}
                     </button>
@@ -1912,6 +2107,107 @@ const Dashboard = () => {
                   {icon}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Print Dialog Modal */}
+      {showPrintDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-96 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Print Presentation</h2>
+              <button onClick={() => setShowPrintDialog(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <RiCloseLine size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Orientation
+                </label>
+                <select
+                  id="orientation"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  defaultValue="portrait"
+                >
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Paper size
+                </label>
+                <select
+                  id="paperSize"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  defaultValue="A4"
+                >
+                  <option value="A4">A4</option>
+                  <option value="Letter">Letter</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Slides per page
+                </label>
+                <select
+                  id="slidesPerPage"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  defaultValue="6"
+                >
+                  <option value="1">1 slide per page</option>
+                  <option value="2">2 slides per page</option>
+                  <option value="3">3 slides per page</option>
+                  <option value="4">4 slides per page</option>
+                  <option value="6">6 slides per page (Handout)</option>
+                  <option value="9">9 slides per page</option>
+                </select>
+              </div>
+
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                This will print all slides in the presentation ({slides.length} slides)
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowPrintDialog(false)}
+                className="btn-secondary px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const orientation = document.getElementById('orientation').value;
+                  const paperSize = document.getElementById('paperSize').value;
+                  const slidesPerPage = parseInt(document.getElementById('slidesPerPage').value);
+
+                  if (!slides || slides.length === 0) {
+                    alert('No slides to print');
+                    return;
+                  }
+
+                  printSlide(slides, currentSlide, presentationMeta, {
+                    orientation,
+                    paperSize,
+                    slidesPerPage
+                  });
+
+                  setShowPrintDialog(false);
+                }}
+                className="btn-primary px-4 py-2 text-sm inline-flex items-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+              </button>
             </div>
           </div>
         </div>

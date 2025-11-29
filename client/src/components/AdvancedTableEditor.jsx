@@ -47,12 +47,7 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
     }
   };
 
-  const updateCellContent = (rowIndex, colIndex, content) => {
-    const newData = [...tableData];
-    if (!newData[rowIndex]) newData[rowIndex] = [];
-    newData[rowIndex][colIndex] = content;
-    onUpdate({ data: newData });
-  };
+  // Removed updateCellContent function as updates are now handled directly in event handlers
 
   const addRow = (afterIndex) => {
     const newData = [...tableData];
@@ -215,19 +210,45 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
                   key={colIndex}
                   contentEditable={true}
                   suppressContentEditableWarning={true}
+                  style={getCellStyle(rowIndex, colIndex)}
+                  className="p-2 min-w-[60px] min-h-[30px] border cursor-text outline-none focus:bg-blue-50 focus:border-blue-500"
+                  data-row={rowIndex}
+                  data-col={colIndex}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCellClick(rowIndex, colIndex, e);
                   }}
-                  onInput={(e) => updateCellContent(rowIndex, colIndex, e.target.innerHTML)}
-                  onBlur={(e) => updateCellContent(rowIndex, colIndex, e.target.innerHTML)}
-                  style={getCellStyle(rowIndex, colIndex)}
-                  className="p-2 min-w-[60px] min-h-[30px] outline-none cursor-text border"
-                  data-row={rowIndex}
-                  data-col={colIndex}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onInput={(e) => {
+                    // Update content on input for real-time updates
+                    const content = e.target.innerHTML;
+                    const newData = [...tableData];
+                    if (!newData[rowIndex]) newData[rowIndex] = [];
+                    newData[rowIndex][colIndex] = content;
+                    onUpdate({ data: newData });
+                  }}
+                  onBlur={(e) => {
+                    // Ensure final content is saved on blur
+                    const content = e.target.innerHTML;
+                    const newData = [...tableData];
+                    if (!newData[rowIndex]) newData[rowIndex] = [];
+                    newData[rowIndex][colIndex] = content;
+                    onUpdate({ data: newData });
+                  }}
+                  onKeyDown={(e) => {
+                    // Allow all keyboard input but prevent canvas shortcuts
+                    if (e.ctrlKey || e.metaKey) {
+                      // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z, etc.
+                      if (['a', 'c', 'v', 'x', 'z', 'y'].includes(e.key.toLowerCase())) {
+                        return; // Allow these
+                      }
+                    }
+                    e.stopPropagation(); // Stop other shortcuts from reaching canvas
+                  }}
                   dangerouslySetInnerHTML={{ __html: cell || (rowIndex === 0 ? `Header ${colIndex + 1}` : '') }}
-                >
-                </td>
+                />
               ))}
             </tr>
           ))}

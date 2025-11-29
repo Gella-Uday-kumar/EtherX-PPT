@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
 import ChartComponent from './ChartComponent';
 import ChartRenderer from './ChartRenderer';
 import TableComponent from './TableComponent';
 import HeaderFooterModal from './HeaderFooterModal';
 import ImageEditor from './ImageEditor';
-import TableEditor from './TableEditor';
 import AdvancedTableEditor from './AdvancedTableEditor';
-import { RiCloseLine } from 'react-icons/ri';
+
 
 const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, snapToGrid = false, zoomLevel = 100 }) => {
    const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta, animationPreview, selectedAnimation } = usePresentation();
@@ -119,6 +118,12 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
       }
     } else {
       document.execCommand(command, false, value);
+    }
+  
+    // For fontSize, also try alternative command
+    if (command === 'fontSize') {
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('fontSize', false, value);
     }
   };
 
@@ -276,13 +281,6 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
       // Only prevent default and show menu if we're actually clicking on a bullet
       // For now, show menu on any LI click, but don't prevent default to allow text editing
       e.stopPropagation();
-
-      // Select the list item content
-      const selection = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(li);
-      selection.removeAllRanges();
-      selection.addRange(range);
 
       // Show bullet menu positioned near the clicked LI
       setSelectedBullet({ li, field });
@@ -566,7 +564,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
   const handleMouseMove = (e) => {
     const element = selectedElement ? (slide.elements || []).find(el => el.id === selectedElement) : null;
 
-    if (isDragging && selectedElement && element?.type !== 'image') {
+    if (isDragging && selectedElement && element && element.type !== 'image') {
       const canvas = e.currentTarget;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left - dragOffset.x;
@@ -575,7 +573,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
       updateElement(selectedElement, { x: Math.max(0, x), y: Math.max(0, y) }, true); // Skip history during drag
     }
 
-    if (isResizing && selectedElement && element?.type !== 'image') {
+    if (isResizing && selectedElement && element && element.type !== 'image') {
       const canvas = e.currentTarget;
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -682,27 +680,28 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
   }, [showBulletMenu, showShapeMenu, showIconMenu]);
 
   // Keyboard shortcuts for element operations
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!selectedElement && !elementClipboard) return;
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key.toLowerCase() === 'c' && selectedElement) {
-          e.preventDefault();
-          copyElement(selectedElement);
-        }
-        if (e.key.toLowerCase() === 'x' && selectedElement) {
-          e.preventDefault();
-          cutElement(selectedElement);
-        }
-        if (e.key.toLowerCase() === 'v') {
-          e.preventDefault();
-          pasteElement();
-        }
+  const onKey = useCallback((e) => {
+    if (!selectedElement && !elementClipboard) return;
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key.toLowerCase() === 'c' && selectedElement) {
+        e.preventDefault();
+        copyElement(selectedElement);
       }
-    };
+      if (e.key.toLowerCase() === 'x' && selectedElement) {
+        e.preventDefault();
+        cutElement(selectedElement);
+      }
+      if (e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        pasteElement();
+      }
+    }
+  }, [selectedElement, elementClipboard, slide]);
+
+  useEffect(() => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selectedElement, elementClipboard, slide]);
+  }, [onKey]);
 
   return (
     <div className="editor-wrapper h-[calc(100vh-80px)] overflow-y-scroll overflow-x-hidden p-6">
@@ -961,8 +960,11 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onMouseDown={(e) => {
-              // Clear table cell selection when clicking on canvas
-              setSelectedTableCell(null);
+              // Only clear table cell selection if not clicking inside a table
+              const tableCell = e.target.closest('td[contenteditable]');
+              if (!tableCell) {
+                setSelectedTableCell(null);
+              }
 
               // Handle bullet clicks using event delegation
               const li = e.target.closest('li');
@@ -1003,82 +1005,86 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             }}></div>
             {/* Layout-aware regions */}
             {layoutType === 'title-content' && (
-              <>
+              <div>
                 <div
-                  key={`title-content-title-${currentSlide}-${layoutType}`}
+                  key={`title-content-title-${layoutType}`}
                   ref={titleRef}
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleTitleEdit}
                   onFocus={() => setIsEditing(true)}
                   className="absolute top-12 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent"
-                  style={{ color: slide.textColor || '#1f2937', ...getAnimationStyle('title') }}
+                  style={{ color: slide.textColor || '#1f2937', caretColor: slide.textColor || '#1f2937', ...getAnimationStyle('title') }}
                   dangerouslySetInnerHTML={{ __html: slide.title || 'Click to add title' }}
-                />
+                ></div>
                 <div
-                  key={`title-content-content-${currentSlide}-${layoutType}`}
+                  key={`title-content-content-${layoutType}`}
                   ref={contentRef}
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleContentEdit}
                   onFocus={() => setIsEditing(true)}
                   className="absolute top-32 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent"
-                  style={{ color: slide.textColor || '#374151', ...getAnimationStyle('content') }}
+                  style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151', ...getAnimationStyle('content') }}
                   dangerouslySetInnerHTML={{ __html: slide.content || 'Click to add content' }}
-                />
-              </>
+                ></div>
+              </div>
             )}
 
             {layoutType === 'title-only' && (
-              <div
-                key={`title-only-${slide.id || currentSlide}-${layoutType}`}
-                ref={titleRef}
-                contentEditable={true}
-                suppressContentEditableWarning={true}
-                onBlur={handleTitleEdit}
-                onFocus={() => setIsEditing(true)}
-                className="absolute top-24 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent"
-                style={{ color: slide.textColor || '#1f2937', ...getAnimationStyle('title') }}
-                dangerouslySetInnerHTML={{ __html: slide.title || 'Click to add title' }}
-              />
+              <div>
+                <div
+                  key={`title-only-${layoutType}`}
+                  ref={titleRef}
+                  contentEditable={true}
+                  suppressContentEditableWarning={true}
+                  onBlur={handleTitleEdit}
+                  onFocus={() => setIsEditing(true)}
+                  className="absolute top-24 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent"
+                  style={{ color: slide.textColor || '#1f2937', caretColor: slide.textColor || '#1f2937', ...getAnimationStyle('title') }}
+                  dangerouslySetInnerHTML={{ __html: slide.title || 'Click to add title' }}
+                ></div>
+              </div>
             )}
 
             {layoutType === 'content-only' && (
-              <div
-                key={`content-only-${slide.id || currentSlide}-${layoutType}`}
-                ref={contentRef}
-                contentEditable={true}
-                suppressContentEditableWarning={true}
-                onBlur={handleContentEdit}
-                onFocus={() => setIsEditing(true)}
-                className="absolute top-16 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent"
-                style={{ color: slide.textColor || '#374151', ...getAnimationStyle('content') }}
-                dangerouslySetInnerHTML={{ __html: slide.content || 'Click to add content' }}
-              />
+              <div>
+                <div
+                  key={`content-only-${layoutType}`}
+                  ref={contentRef}
+                  contentEditable={true}
+                  suppressContentEditableWarning={true}
+                  onBlur={handleContentEdit}
+                  onFocus={() => setIsEditing(true)}
+                  className="absolute top-16 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent"
+                  style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151', ...getAnimationStyle('content') }}
+                  dangerouslySetInnerHTML={{ __html: slide.content || 'Click to add content' }}
+                ></div>
+              </div>
             )}
 
             {layoutType === 'two-column' && (
               <div className="absolute inset-0 pt-20 px-12 pb-12 grid grid-cols-2 gap-6">
                 <div
-                  key={`two-column-left-${slide.id || currentSlide}-${layoutType}`}
+                  key={`two-column-left-${layoutType}`}
                   data-layout="left"
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleLeftEdit}
                   className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[200px]"
-                  style={{ color: slide.textColor || '#374151' }}
+                  style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151' }}
                   dangerouslySetInnerHTML={{ __html: slide.contentLeft || 'Left content' }}
-                />
+                ></div>
                 <div
-                  key={`two-column-right-${slide.id || currentSlide}-${layoutType}`}
+                  key={`two-column-right-${layoutType}`}
                   data-layout="right"
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleRightEdit}
                   className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[200px]"
-                  style={{ color: slide.textColor || '#374151' }}
+                  style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151' }}
                   dangerouslySetInnerHTML={{ __html: slide.contentRight || 'Right content' }}
-                />
+                ></div>
               </div>
             )}
 
@@ -1095,15 +1101,15 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                   <input id="image-text-upload" type="file" accept="image/*" className="hidden" onChange={handleImageTextInputChange} />
                 </div>
                 <div
-                  key={`image-text-content-${slide.id || currentSlide}-${layoutType}`}
+                  key={`image-text-content-${layoutType}`}
                   data-layout="image-text-content"
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={handleContentEdit}
                   className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[200px]"
-                  style={{ color: slide.textColor || '#374151' }}
+                  style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151' }}
                   dangerouslySetInnerHTML={{ __html: slide.content || 'Add text' }}
-                />
+                ></div>
               </div>
             )}
 
@@ -1111,47 +1117,47 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
               <div className="absolute inset-0 pt-12 px-12 pb-12 grid grid-cols-2 gap-6">
                 <div>
                   <div
-                    key={`comparison-left-title-${slide.id || currentSlide}-${layoutType}`}
+                    key={`comparison-left-title-${layoutType}`}
                     contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompLeftTitleEdit}
                     className="text-2xl font-semibold outline-none p-2 rounded-xl bg-transparent min-h-[40px] mb-2 text-center"
-                    style={{ color: slide.textColor || '#1f2937' }}
+                    style={{ color: slide.textColor || '#1f2937', caretColor: slide.textColor || '#1f2937' }}
                     dangerouslySetInnerHTML={{ __html: slide.compLeftTitle || 'Left heading' }}
-                  />
+                  ></div>
                   <div
-                    key={`comparison-left-content-${slide.id || currentSlide}-${layoutType}`}
+                    key={`comparison-left-content-${layoutType}`}
                     data-layout="comp-left-content"
                     contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompLeftContentEdit}
                     onMouseDown={(e) => handleBulletClick(e, 'compLeftContent')}
                     className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[160px]"
-                    style={{ color: slide.textColor || '#374151' }}
+                    style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151' }}
                     dangerouslySetInnerHTML={{ __html: slide.compLeftContent || 'Left content' }}
-                  />
+                  ></div>
                 </div>
                 <div>
                   <div
-                    key={`comparison-right-title-${slide.id || currentSlide}-${layoutType}`}
+                    key={`comparison-right-title-${layoutType}`}
                     contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompRightTitleEdit}
                     className="text-2xl font-semibold outline-none p-2 rounded-xl bg-transparent min-h-[40px] mb-2 text-center"
-                    style={{ color: slide.textColor || '#1f2937' }}
+                    style={{ color: slide.textColor || '#1f2937', caretColor: slide.textColor || '#1f2937' }}
                     dangerouslySetInnerHTML={{ __html: slide.compRightTitle || 'Right heading' }}
-                  />
+                  ></div>
                   <div
-                    key={`comparison-right-content-${slide.id || currentSlide}-${layoutType}`}
+                    key={`comparison-right-content-${layoutType}`}
                     data-layout="comp-right-content"
                     contentEditable={true}
                     suppressContentEditableWarning={true}
                     onBlur={handleCompRightContentEdit}
                     onMouseDown={(e) => handleBulletClick(e, 'compRightContent')}
                     className="text-lg outline-none p-4 rounded-xl bg-transparent min-h-[160px]"
-                    style={{ color: slide.textColor || '#374151' }}
+                    style={{ color: slide.textColor || '#374151', caretColor: slide.textColor || '#374151' }}
                     dangerouslySetInnerHTML={{ __html: slide.compRightContent || 'Right content' }}
-                  />
+                  ></div>
                 </div>
               </div>
             )}
@@ -1167,7 +1173,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                 <div
                   key={`${element.id}-${animationPreview.active ? 'animating' : 'static'}-${animationKey}`}
                   data-element-id={element.id}
-                  className={`slide-element ${
+                  className={`slide-element relative group ${
                     selectedElement === element.id ? 'selected' : ''
                   }`}
                   style={{
@@ -1190,41 +1196,42 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                     setContextMenu({ visible: true, x: e.clientX, y: e.clientY, elementId: element.id });
                   }}
                 >
-              {element.type === 'textbox' && (
-                <div
-                  contentEditable
-                  suppressContentEditableWarning={true}
-                  onBlur={(e) => updateElement(element.id, { content: e.target.innerHTML, isEditing: false })}
-                  onFocus={() => updateElement(element.id, { isEditing: true })}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedElement(element.id);
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onPaste={(e) => {
-                    // Handle image paste
-                    const items = e.clipboardData.items;
-                    for (let item of items) {
-                      if (item.type.indexOf('image') !== -1) {
-                        e.preventDefault();
-                        const file = item.getAsFile();
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          updateElement(element.id, {
-                            type: 'image',
-                            src: event.target.result,
-                            content: undefined
-                          });
-                        };
-                        reader.readAsDataURL(file);
-                        break;
-                      }
-                    }
-                  }}
-                  className="w-full h-full outline-none p-1 cursor-text"
-                  dangerouslySetInnerHTML={{ __html: element.content }}
-                />
-              )}
+{element.type === 'textbox' && (
+  <div
+    contentEditable
+    suppressContentEditableWarning={true}
+    onBlur={(e) => updateElement(element.id, { content: e.target.innerHTML, isEditing: false })}
+    onFocus={() => updateElement(element.id, { isEditing: true })}
+    onClick={(e) => {
+      e.stopPropagation();
+      setSelectedElement(element.id);
+    }}
+    onMouseDown={(e) => e.stopPropagation()}
+    onPaste={(e) => {
+      // Handle image paste
+      const items = e.clipboardData.items;
+      for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            updateElement(element.id, {
+              type: 'image',
+              src: event.target.result,
+              content: undefined
+            });
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    }}
+    className="w-full h-full outline-none p-1 cursor-text"
+    style={{ caretColor: element.color || '#000000' }}
+    dangerouslySetInnerHTML={{ __html: element.content }}
+  ></div>
+)}
               
               {element.type === 'image' && (
                 <ImageEditor
@@ -1390,7 +1397,8 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                       fontSize: 'inherit',
                       fontFamily: 'inherit',
                       color: 'inherit',
-                      backgroundColor: 'transparent'
+                      backgroundColor: 'transparent',
+                      caretColor: element.color || '#000000'
                     }}
                   >
                     {element.content || 'Enter equation...'}
@@ -1398,44 +1406,43 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                 </div>
               )}
               
-                {selectedElement === element.id && element.type !== 'image' && (
-                  <>
-                    {/* Modern Delete Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteElement(element.id);
-                      }}
-                      className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center z-10"
-                    >
-                      <RiCloseLine className="w-4 h-4" />
-                    </button>
+              {((selectedElement === element.id || element.type === 'shape') && element.type !== 'image') && (
+                <>
+                  {/* Modern Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteElement(element.id);
+                    }}
+                    className={`absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white text-lg font-medium transition-all duration-200 flex items-center justify-center z-10 ${
+                      selectedElement === element.id ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'
+                    }`}
+                    title="Delete element"
+                  >
+                    ✕
+                  </button>
 
-                    {/* Resize Handles */}
-                    <div
-                      className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary-500 rounded-full cursor-se-resize z-10"
-                      onMouseDown={(e) => handleResizeStart(e, element.id, 'se')}
-                    ></div>
-                    <div
-                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full cursor-ne-resize z-10"
-                      onMouseDown={(e) => handleResizeStart(e, element.id, 'ne')}
-                    ></div>
-                    <div
-                      className="absolute -top-1 -left-1 w-3 h-3 bg-primary-500 rounded-full cursor-nw-resize z-10"
-                      onMouseDown={(e) => handleResizeStart(e, element.id, 'nw')}
-                    ></div>
-                    <div
-                      className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary-500 rounded-full cursor-sw-resize z-10"
-                      onMouseDown={(e) => handleResizeStart(e, element.id, 'sw')}
-                    ></div>
-                  </>
-                )}
-              </div>
-            )}
-
-          )
-
-          }
+                  {/* Resize Handles */}
+                  <div
+                    className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary-500 cursor-se-resize z-10"
+                    onMouseDown={(e) => handleResizeStart(e, element.id, 'se')}
+                  ></div>
+                  <div
+                    className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 cursor-ne-resize z-10"
+                    onMouseDown={(e) => handleResizeStart(e, element.id, 'ne')}
+                  ></div>
+                  <div
+                    className="absolute -top-1 -left-1 w-3 h-3 bg-primary-500 cursor-nw-resize z-10"
+                    onMouseDown={(e) => handleResizeStart(e, element.id, 'nw')}
+                  ></div>
+                  <div
+                    className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary-500 cursor-sw-resize z-10"
+                    onMouseDown={(e) => handleResizeStart(e, element.id, 'sw')}
+                  ></div>
+                </>
+              )}
+  </div>);
+            })}
 
           </div>
           {/* Canvas Info */}
@@ -1445,7 +1452,6 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
         </div>
       </div>
 
-      
       {/* Modern Modals */}
       {showChartModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
@@ -1461,7 +1467,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
           </div>
         </div>
       )}
-    {showHeaderFooter && (
+      {showHeaderFooter && (
         <HeaderFooterModal
           onClose={() => setShowHeaderFooter(false)}
           meta={presentationMeta}
@@ -1475,9 +1481,9 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
           style={{ left: contextMenu.x + 4, top: contextMenu.y + 4 }}
           onMouseLeave={() => setContextMenu({ visible: false, x: 0, y: 0, elementId: null })}
         >
-          <button className="dropdown-item" onClick={() => { copyElement(contextMenu.elementId); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Copy	Ctrl+C</button>
-          <button className="dropdown-item" onClick={() => { cutElement(contextMenu.elementId); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Cut	Ctrl+X</button>
-          <button className="dropdown-item" onClick={() => { pasteElement(); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Paste	Ctrl+V</button>
+          <button className="dropdown-item" onClick={() => { copyElement(contextMenu.elementId); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Copy Ctrl+C</button>
+          <button className="dropdown-item" onClick={() => { cutElement(contextMenu.elementId); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Cut Ctrl+X</button>
+          <button className="dropdown-item" onClick={() => { pasteElement(); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Paste Ctrl+V</button>
           <button className="dropdown-item" onClick={() => { duplicateElement(contextMenu.elementId); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Duplicate</button>
           <button className="dropdown-item text-red-500" onClick={() => { if (confirm('Delete element?')) deleteElement(contextMenu.elementId); setContextMenu({ visible: false, x: 0, y: 0, elementId: null }); }}>Delete</button>
         </div>
@@ -1500,7 +1506,6 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
         </div>
       )}
     </div>
-  </div>
   );
 };
 

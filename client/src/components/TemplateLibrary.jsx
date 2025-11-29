@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
 
 const TemplateLibrary = ({ onClose }) => {
-  const { setSlides, setCurrentSlide } = usePresentation();
+  const { setSlides, setCurrentSlide, setPresentationMeta } = usePresentation();
   const [selectedCategory, setSelectedCategory] = useState('business');
 
   const templates = {
@@ -130,8 +130,25 @@ const TemplateLibrary = ({ onClose }) => {
   ];
 
   const handleUseTemplate = (template) => {
-    setSlides(template.slides);
+    // Generate unique IDs for slides to avoid conflicts
+    const baseId = Date.now();
+    const slidesWithUniqueIds = template.slides.map((slide, index) => ({
+      ...slide,
+      title: `${template.name}: ${slide.title}`,
+      id: baseId + index
+    }));
+
+    setSlides(slidesWithUniqueIds);
     setCurrentSlide(0);
+    // Update presentation meta with template name
+    setPresentationMeta(prev => ({
+      ...prev,
+      title: template.name || 'Untitled',
+      updatedAt: new Date().toISOString()
+    }));
+    // Save to localStorage for persistence
+    localStorage.setItem('undoHistory', JSON.stringify([slidesWithUniqueIds]));
+    localStorage.setItem('selectedTemplate', JSON.stringify({ ...template, slides: slidesWithUniqueIds }));
     onClose();
   };
 
