@@ -1005,7 +1005,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             {layoutType === 'title-content' && (
               <>
                 <div
-                  key={`title-content-title-${slide.id || currentSlide}-${layoutType}`}
+                  key={`title-content-title-${currentSlide}-${layoutType}`}
                   ref={titleRef}
                   contentEditable={true}
                   suppressContentEditableWarning={true}
@@ -1016,7 +1016,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                   dangerouslySetInnerHTML={{ __html: slide.title || 'Click to add title' }}
                 />
                 <div
-                  key={`title-content-content-${slide.id || currentSlide}-${layoutType}`}
+                  key={`title-content-content-${currentSlide}-${layoutType}`}
                   ref={contentRef}
                   contentEditable={true}
                   suppressContentEditableWarning={true}

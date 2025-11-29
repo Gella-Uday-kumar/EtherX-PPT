@@ -11,13 +11,7 @@ const ExportMenu = ({ isOpen, onClose, onExport }) => {
 
   const exportOptions = [
     { format: 'pptx', label: 'PowerPoint (.pptx)', icon: RiFilePptLine },
-    { format: 'pdf', label: 'PDF Document (.pdf)', icon: RiFileTextLine },
-    { format: 'odp', label: 'OpenDocument (.odp)', icon: RiFilePptLine },
-    { format: 'docx', label: 'Word Document (.docx)', icon: RiFileTextLine },
-    { format: 'rtf', label: 'Rich Text (.rtf)', icon: RiFileTextLine },
-    { format: 'mp4', label: 'MP4 Video (.mp4)', icon: RiVideoLine },
-    { format: 'png', label: 'PNG Images (.png)', icon: RiImageLine },
-    { format: 'jpeg', label: 'JPEG Images (.jpeg)', icon: RiImageLine }
+    { format: 'pdf', label: 'PDF Document (.pdf)', icon: RiFileTextLine }
   ];
 
   return (

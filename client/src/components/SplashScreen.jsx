@@ -39,8 +39,8 @@ export function SplashScreen({ onLoadingComplete }) {
         gap: '30px'
       }}>
         <div style={{
-          width: '140px',
-          height: '140px',
+          width: '180px',
+          height: '180px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',

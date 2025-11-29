@@ -8,6 +8,15 @@
   --hover-bg: #4B5563;
 }
 
+/* Dark mode specific variables */
+.dark {
+  --primary-bg: #000000;
+  --secondary-bg: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e7eb;
+  --border-dark: #374151;
+}
+
 /* Global theme overrides */
 .theme-bg {
   background-color: var(--primary-bg);
@@ -86,6 +95,102 @@
 
 .dark .editor-wrapper::-webkit-scrollbar-thumb {
   background: #444;
+}
+
+/* Additional dark mode fixes */
+.dark input, .dark textarea, .dark select {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #F0A500 !important;
+}
+
+.dark input::placeholder, .dark textarea::placeholder {
+  color: rgba(240, 165, 0, 0.6) !important;
+}
+
+.dark .bg-white {
+  background-color: #000000 !important;
+}
+
+.dark .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.dark .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark .border-gray-100 {
+  border-color: #1f2937 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+
+.dark .border-gray-400 {
+  border-color: #6b7280 !important;
+}
+
+.dark .border-gray-500 {
+  border-color: #9ca3af !important;
+}
+
+.dark .border-gray-600 {
+  border-color: #d1d5db !important;
+}
+
+.dark .border-gray-700 {
+  border-color: #e5e7eb !important;
+}
+
+/* Additional border style fixes for dark mode */
+.dark .border-dashed {
+  border-style: dashed !important;
+}
+
+.dark .border-solid {
+  border-style: solid !important;
+}
+
+.dark .border-2 {
+  border-width: 2px !important;
+}
+
+.dark .border-l {
+  border-left-width: 1px !important;
+}
+
+.dark .border-r {
+  border-right-width: 1px !important;
+}
+
+.dark .border-t {
+  border-top-width: 1px !important;
+}
+
+.dark .border-b {
+  border-bottom-width: 1px !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1f2937 !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: #111827 !important;
 }
 
 /* Animation Keyframes */

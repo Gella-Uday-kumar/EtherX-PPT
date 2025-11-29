@@ -13,18 +13,28 @@ const Home = () => {
   const [recentFiles, setRecentFiles] = useState([]);
   const [pinnedFiles, setPinnedFiles] = useState([]);
 
-  const templates = [
-    { id: 1, name: 'Blank Presentation', category: 'Basic', description: 'Start with a blank presentation' },
-    { id: 2, name: 'Business Pitch', category: 'Business', description: 'Professional business presentation' },
-    { id: 3, name: 'Project Report', category: 'Business', description: 'Project status and updates' },
-    { id: 4, name: 'Educational', category: 'Education', description: 'Educational content template' },
-    { id: 5, name: 'Marketing Plan', category: 'Marketing', description: 'Marketing strategy presentation' },
-    { id: 6, name: 'Sales Report', category: 'Business', description: 'Sales performance report' },
-    { id: 7, name: 'Training Module', category: 'Education', description: 'Employee training presentation' },
-    { id: 8, name: 'Product Launch', category: 'Marketing', description: 'New product announcement' },
-    { id: 9, name: 'Financial Report', category: 'Business', description: 'Financial analysis and data' },
-    { id: 10, name: 'Team Meeting', category: 'Business', description: 'Team updates and agenda' }
-  ];
+  const templates = {
+    1: { id: 1, name: 'Blank Presentation', category: 'Basic', description: 'Start with a blank presentation', slides: [{ id: 1, title: 'Click to add title', content: 'Click to add content', background: '#ffffff', textColor: '#000000', layout: 'title-content', elements: [] }] },
+    2: { id: 2, name: 'Business Pitch', category: 'Business', description: 'Professional business presentation', slides: [
+      { id: 1, title: 'Company Overview', content: 'Present your company vision and mission', background: '#1E40AF', textColor: '#FFFFFF', layout: 'title-content', elements: [] },
+      { id: 2, title: 'Problem Statement', content: 'Define the problem you are solving', background: '#1E40AF', textColor: '#FFFFFF', layout: 'title-content', elements: [] },
+      { id: 3, title: 'Our Solution', content: 'Present your innovative solution', background: '#1E40AF', textColor: '#FFFFFF', layout: 'title-content', elements: [] }
+    ]},
+    3: { id: 3, name: 'Project Report', category: 'Business', description: 'Project status and updates', slides: [
+      { id: 1, title: 'Project Status Report', content: 'Q4 2024 Progress Update', background: '#059669', textColor: '#FFFFFF', layout: 'title-content', elements: [] },
+      { id: 2, title: 'Key Achievements', content: 'Major milestones and accomplishments', background: '#059669', textColor: '#FFFFFF', layout: 'title-content', elements: [] }
+    ]},
+    4: { id: 4, name: 'Educational', category: 'Education', description: 'Educational content template', slides: [
+      { id: 1, title: 'Course Introduction', content: 'Welcome to the course', background: '#7C3AED', textColor: '#FFFFFF', layout: 'title-content', elements: [] },
+      { id: 2, title: 'Learning Objectives', content: 'What you will learn today', background: '#7C3AED', textColor: '#FFFFFF', layout: 'title-content', elements: [] }
+    ]},
+    5: { id: 5, name: 'Marketing Plan', category: 'Marketing', description: 'Marketing strategy presentation', slides: [
+      { id: 1, title: 'Marketing Strategy 2024', content: 'Our comprehensive marketing approach', background: '#DC2626', textColor: '#FFFFFF', layout: 'title-content', elements: [] },
+      { id: 2, title: 'Target Audience', content: 'Understanding our customers', background: '#DC2626', textColor: '#FFFFFF', layout: 'title-content', elements: [] }
+    ]}
+  };
+  
+  const templateList = Object.values(templates);
 
   useEffect(() => {
     loadRecentFiles();
@@ -42,23 +52,15 @@ const Home = () => {
   };
 
   const handleCreateNew = (templateId = null) => {
-    const newFile = {
-      id: Date.now(),
-      name: templateId ? templates.find(t => t.id === templateId)?.name || 'New Presentation' : 'Blank Presentation',
-      modified: new Date().toISOString(),
-      created: new Date().toISOString(),
-      templateId
-    };
+    const template = templateId ? templates[templateId] : null;
     
-    const recent = JSON.parse(localStorage.getItem('recentFiles') || '[]');
-    recent.unshift(newFile);
-    localStorage.setItem('recentFiles', JSON.stringify(recent.slice(0, 20)));
-    
-    if (templateId) {
-      navigate(`/dashboard?template=${templateId}`);
+    if (template && template.slides) {
+      localStorage.setItem('selectedTemplate', JSON.stringify(template));
     } else {
-      navigate('/dashboard');
+      localStorage.removeItem('selectedTemplate');
     }
+    
+    navigate('/dashboard');
   };
 
   const handleOpenFile = () => {
@@ -115,15 +117,15 @@ const Home = () => {
     }
   };
 
-  const filteredTemplates = templates.filter(template => 
+  const filteredTemplates = templateList.filter(template => 
     template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     template.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1B1A17' }}>
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
-      <header style={{ backgroundColor: '#000000', borderBottom: '1px solid #F0A500' }}>
+      <header className="bg-white dark:bg-black border-b" style={{ borderColor: '#F0A500' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
@@ -137,7 +139,7 @@ const Home = () => {
                 <button
                   onClick={() => setActiveTab('home')}
                   className={`px-3 py-2 text-sm font-medium ${activeTab === 'home' ? 'border-b-2' : 'hover:opacity-80'}`}
-                  style={{ color: activeTab === 'home' ? '#F0A500' : '#F0A500', borderColor: activeTab === 'home' ? '#F0A500' : 'transparent' }}
+                  style={{ color: '#F0A500', borderColor: activeTab === 'home' ? '#F0A500' : 'transparent' }}
                 >
                   Home
                 </button>
@@ -165,8 +167,8 @@ const Home = () => {
                   placeholder="Search templates and files"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-80 px-4 py-2 pl-10 pr-4 text-sm border rounded-lg focus:ring-2 focus:outline-none"
-                  style={{ backgroundColor: '#000000', color: '#F0A500', borderColor: '#F0A500' }}
+                  className="w-80 px-4 py-2 pl-10 pr-4 text-sm border rounded-lg focus:ring-2 focus:outline-none bg-white dark:bg-black"
+                  style={{ color: '#F0A500', borderColor: '#F0A500' }}
                 />
                 <svg className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -176,6 +178,7 @@ const Home = () => {
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                style={{ color: '#F0A500' }}
                 title="Toggle theme"
               >
                 {isDark ? '☀️' : '🌙'}
@@ -189,7 +192,7 @@ const Home = () => {
                   <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
                     {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{user?.name || user?.email}</span>
+                  <span className="text-sm text-gray-700 dark:text-white">{user?.name || user?.email}</span>
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -240,14 +243,14 @@ const Home = () => {
                   <button
                     onClick={handleOpenFile}
                     className="px-4 py-2 rounded-lg transition-colors"
-                    style={{ backgroundColor: '#F0A500', color: '#1B1A17' }}
+                    style={{ backgroundColor: '#F0A500', color: '#000000' }}
                   >
                     Open File
                   </button>
                   <button
                     onClick={() => handleCreateNew()}
-                    className="px-4 py-2 rounded-lg transition-colors border"
-                    style={{ backgroundColor: 'transparent', color: '#F0A500', borderColor: '#F0A500' }}
+                    className="px-4 py-2 rounded-lg transition-colors border bg-transparent hover:text-black"
+                    style={{ color: '#F0A500', borderColor: '#F0A500' }}
                   >
                     New Blank
                   </button>
@@ -271,25 +274,29 @@ const Home = () => {
                 </div>
 
                 {/* Template Previews */}
-                {filteredTemplates.slice(1, 6).map((template) => (
-                  <div 
-                    key={template.id}
-                    onClick={() => handleCreateNew(template.id)}
-                    className="cursor-pointer group"
-                    title={template.description}
-                  >
-                    <div className="aspect-[4/3] bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="w-full h-full flex items-center justify-center text-white">
-                        <div className="text-center">
-                          <div className="w-8 h-8 mx-auto mb-2 bg-white/20 rounded"></div>
-                          <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-1"></div>
-                          <div className="w-8 h-1 mx-auto bg-white/30 rounded"></div>
+                {filteredTemplates.slice(1, 6).map((template) => {
+                  const bgColor = template.slides?.[0]?.background || '#4F46E5';
+                  return (
+                    <div 
+                      key={template.id}
+                      onClick={() => handleCreateNew(template.id)}
+                      className="cursor-pointer group"
+                      title={template.description}
+                    >
+                      <div className="aspect-[4/3] rounded-lg overflow-hidden hover:shadow-lg transition-shadow" style={{ background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)` }}>
+                        <div className="w-full h-full flex items-center justify-center text-white">
+                          <div className="text-center">
+                            <div className="w-8 h-8 mx-auto mb-2 bg-white/20 rounded"></div>
+                            <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-1"></div>
+                            <div className="w-8 h-1 mx-auto bg-white/30 rounded"></div>
+                            <div className="text-xs mt-1 opacity-75">{template.slides?.length || 1} slides</div>
+                          </div>
                         </div>
                       </div>
+                      <p className="text-sm mt-2 text-center" style={{ color: '#F0A500' }}>{template.name}</p>
                     </div>
-                    <p className="text-sm mt-2 text-center" style={{ color: '#F0A500' }}>{template.name}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -304,8 +311,8 @@ const Home = () => {
                   {pinnedFiles.map((file) => (
                     <div 
                       key={file.id}
-                      className="cursor-pointer rounded-lg border hover:shadow-md transition-shadow p-4 group"
-                      style={{ backgroundColor: '#000000', borderColor: '#F0A500' }}
+                      className="cursor-pointer rounded-lg border hover:shadow-md transition-shadow p-4 group bg-white dark:bg-black"
+                      style={{ borderColor: '#F0A500' }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-3 flex-1" onClick={() => navigate('/dashboard')}>
@@ -399,29 +406,33 @@ const Home = () => {
           <div>
             <h2 className="text-2xl font-semibold mb-6" style={{ color: '#F0A500' }}>Choose a template</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {filteredTemplates.map((template) => (
-                <div 
-                  key={template.id}
-                  onClick={() => handleCreateNew(template.id)}
-                  className="cursor-pointer group"
-                >
-                  <div className="aspect-[4/3] bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg overflow-hidden hover:shadow-lg transition-shadow mb-3">
-                    <div className="w-full h-full flex items-center justify-center text-white">
-                      <div className="text-center">
-                        <div className="w-12 h-12 mx-auto mb-3 bg-white/20 rounded"></div>
-                        <div className="w-16 h-1 mx-auto bg-white/30 rounded mb-2"></div>
-                        <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-2"></div>
-                        <div className="w-14 h-1 mx-auto bg-white/30 rounded"></div>
+              {filteredTemplates.map((template) => {
+                const bgColor = template.slides?.[0]?.background || '#4F46E5';
+                return (
+                  <div 
+                    key={template.id}
+                    onClick={() => handleCreateNew(template.id)}
+                    className="cursor-pointer group"
+                  >
+                    <div className="aspect-[4/3] rounded-lg overflow-hidden hover:shadow-lg transition-shadow mb-3" style={{ background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)` }}>
+                      <div className="w-full h-full flex items-center justify-center text-white p-4">
+                        <div className="text-center">
+                          <div className="w-12 h-8 mx-auto mb-2 bg-white/20 rounded"></div>
+                          <div className="w-16 h-1 mx-auto bg-white/30 rounded mb-1"></div>
+                          <div className="w-12 h-1 mx-auto bg-white/30 rounded mb-1"></div>
+                          <div className="w-14 h-1 mx-auto bg-white/30 rounded"></div>
+                          <div className="text-xs mt-2 opacity-75">{template.slides?.length || 1} slides</div>
+                        </div>
                       </div>
                     </div>
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">{template.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{template.description}</p>
+                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                      {template.category}
+                    </span>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">{template.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{template.description}</p>
-                  <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                    {template.category}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -433,7 +444,7 @@ const Home = () => {
               <button
                 onClick={handleOpenFile}
                 className="px-4 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: '#F0A500', color: '#1B1A17' }}
+                style={{ backgroundColor: '#F0A500', color: '#000000' }}
               >
                 Browse Files
               </button>

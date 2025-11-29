@@ -513,10 +513,104 @@ const exportToPowerPoint = async (slides, filename) => {
 };
 
 const exportToPDF = async (slides, filename) => {
-  // Would use jsPDF or similar
-  const data = JSON.stringify({ slides, format: 'pdf' });
-  downloadFile(data, `${filename}.pdf`, 'application/pdf');
-  console.log('PDF export completed');
+  try {
+    const { jsPDF } = await import('jspdf');
+    const html2canvas = (await import('html2canvas')).default;
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'in',
+      format: 'a4'
+    });
+
+    for (let i = 0; i < slides.length; i++) {
+      const slide = slides[i];
+
+      // Create a temporary div to render the slide
+      const tempDiv = document.createElement('div');
+      tempDiv.style.width = '11.69in'; // A4 landscape width
+      tempDiv.style.height = '8.27in'; // A4 landscape height
+      tempDiv.style.backgroundColor = slide.background || '#ffffff';
+      tempDiv.style.color = slide.textColor || '#000000';
+      tempDiv.style.padding = '0.5in';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.zIndex = '-1';
+
+      // Add title
+      if (slide.title) {
+        const titleDiv = document.createElement('div');
+        titleDiv.style.fontSize = '36px';
+        titleDiv.style.fontWeight = 'bold';
+        titleDiv.style.textAlign = 'center';
+        titleDiv.style.marginBottom = '0.5in';
+        titleDiv.textContent = slide.title;
+        tempDiv.appendChild(titleDiv);
+      }
+
+      // Add content
+      if (slide.content) {
+        const contentDiv = document.createElement('div');
+        contentDiv.style.fontSize = '24px';
+        contentDiv.style.lineHeight = '1.4';
+        contentDiv.innerHTML = slide.content.replace(/\n/g, '<br>');
+        tempDiv.appendChild(contentDiv);
+      }
+
+      // Handle different layouts
+      if (slide.layout === 'two-column') {
+        tempDiv.innerHTML = '';
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.gap = '0.5in';
+
+        const leftCol = document.createElement('div');
+        leftCol.style.flex = '1';
+        leftCol.innerHTML = slide.contentLeft ? slide.contentLeft.replace(/\n/g, '<br>') : '';
+
+        const rightCol = document.createElement('div');
+        rightCol.style.flex = '1';
+        rightCol.innerHTML = slide.contentRight ? slide.contentRight.replace(/\n/g, '<br>') : '';
+
+        container.appendChild(leftCol);
+        container.appendChild(rightCol);
+        tempDiv.appendChild(container);
+      }
+
+      document.body.appendChild(tempDiv);
+
+      // Convert to canvas
+      const canvas = await html2canvas(tempDiv, {
+        width: 1400,
+        height: 990,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      });
+
+      // Remove temp div
+      document.body.removeChild(tempDiv);
+
+      // Add to PDF
+      const imgData = canvas.toDataURL('image/png');
+      if (i > 0) {
+        pdf.addPage();
+      }
+      pdf.addImage(imgData, 'PNG', 0, 0, 11.69, 8.27);
+    }
+
+    // Save the PDF
+    pdf.save(`${filename}.pdf`);
+    console.log('PDF export completed');
+  } catch (error) {
+    console.error('PDF export failed:', error);
+    // Fallback to JSON export
+    const data = JSON.stringify({ slides, format: 'pdf' });
+    downloadFile(data, `${filename}.pdf`, 'application/pdf');
+    console.log('PDF export failed, falling back to JSON');
+  }
 };
 
 const exportToODP = async (slides, filename) => {

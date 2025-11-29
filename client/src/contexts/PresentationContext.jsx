@@ -14,31 +14,41 @@ export const usePresentation = () => {
 
 export const PresentationProvider = ({ children }) => {
   const { user } = useAuth();
-  const [slides, setSlides] = useState([{
-    id: 1,
-    title: 'Slide 1',
-    content: 'Click to add content',
-    background: '#1B1A17',
-    textColor: '#F0A500',
-    layout: 'title-content',
-    elements: []
-  }]);
+  
+  // Default initial slides
+  const getInitialSlides = () => {
+    return [{
+      id: 1,
+      title: 'Slide 1',
+      content: 'Click to add content',
+      background: '#1B1A17',
+      textColor: '#F0A500',
+      layout: 'title-content',
+      elements: []
+    }];
+  };
+  
+  const [slides, setSlides] = useState(getInitialSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [clipboard, setClipboard] = useState(null);
   const [animationPreview, setAnimationPreview] = useState({ active: false, animations: [] });
   const [selectedAnimation, setSelectedAnimation] = useState(null);
-  const [presentationMeta, setPresentationMeta] = useState({
-    title: 'Untitled',
-    author: '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    slideSize: '16:9',
-    themePreset: 'default',
-    header: { default: '', first: '', even: '', odd: '' },
-    footer: { default: '', first: '', even: '', odd: '' }
-  });
+  const getInitialMeta = () => {
+    return {
+      title: 'Untitled',
+      author: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      slideSize: '16:9',
+      themePreset: 'default',
+      header: { default: '', first: '', even: '', odd: '' },
+      footer: { default: '', first: '', even: '', odd: '' }
+    };
+  };
+
+  const [presentationMeta, setPresentationMeta] = useState(getInitialMeta);
 
   // Push a new snapshot into history (trimming future states)
   const pushHistory = (nextSlides) => {
