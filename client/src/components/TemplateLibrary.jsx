@@ -134,7 +134,6 @@ const TemplateLibrary = ({ onClose }) => {
     const baseId = Date.now();
     const slidesWithUniqueIds = template.slides.map((slide, index) => ({
       ...slide,
-      title: `${template.name}: ${slide.title}`,
       id: baseId + index
     }));
 
@@ -148,7 +147,6 @@ const TemplateLibrary = ({ onClose }) => {
     }));
     // Save to localStorage for persistence
     localStorage.setItem('undoHistory', JSON.stringify([slidesWithUniqueIds]));
-    localStorage.setItem('selectedTemplate', JSON.stringify({ ...template, slides: slidesWithUniqueIds }));
     onClose();
   };
 

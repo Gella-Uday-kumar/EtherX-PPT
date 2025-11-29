@@ -21,8 +21,8 @@ export const PresentationProvider = ({ children }) => {
       id: 1,
       title: 'Slide 1',
       content: 'Click to add content',
-      background: '#1B1A17',
-      textColor: '#F0A500',
+      background: '#ffffff',
+      textColor: '#000000',
       layout: 'title-content',
       elements: []
     }];
@@ -64,17 +64,14 @@ export const PresentationProvider = ({ children }) => {
   };
 
   const addSlide = (layout = 'blank') => {
-    const themeColors = {
-      'default': { bg: '#1B1A17', text: '#F0A500' },
-      'ocean': { bg: '#0b132b', text: '#e0e6f1' },
-      'forest': { bg: '#0f1f14', text: '#e6f2ea' }
-    }[presentationMeta.themePreset] || { bg: '#ffffff', text: '#000000' };
+    // Use colors from the current/last slide to maintain template consistency
+    const lastSlide = slides[slides.length - 1] || {};
     const newSlide = {
       id: Date.now(),
       title: `Slide ${slides.length + 1}`,
       content: 'Click to add content',
-      background: themeColors.bg,
-      textColor: themeColors.text,
+      background: lastSlide.background || '#ffffff',
+      textColor: lastSlide.textColor || '#000000',
       layout,
       elements: []
     };

@@ -12,12 +12,12 @@ const Landing = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white dark:bg-black">
       {/* Header */}
       <header className="container mx-auto px-6 py-4">
         <nav className="navbar">
-          <div className="flex items-center space-x-2">
-            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
+          <div className="flex items-center space-x-1">
+            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-12 h-12" />
             <span className="text-2xl font-bold nav-title">EtherXPPT</span>
           </div>
           <div className="flex items-center space-x-3">
@@ -68,9 +68,9 @@ const Landing = () => {
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in" style={{ color: '#F0A500' }}>
             Create Amazing
-            <span className={isDark ? 'text-white' : 'text-black'}> Presentations</span>
+            <span className={isDark ? 'text-white' : 'text-gray-900'}> Presentations</span>
           </h1>
-          <p className={`text-xl mb-8 animate-slide-in-up ${isDark ? 'text-white' : 'text-black'}`}>
+          <p className={`text-xl mb-8 animate-slide-in-up ${isDark ? 'text-white' : 'text-gray-700'}`}>
             Professional PowerPoint-like editor with real-time collaboration, 
             modern design tools, and seamless workflow.
           </p>
@@ -99,8 +99,8 @@ const Landing = () => {
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiFileAddLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>New Presentation</h3>
-            <p className={isDark ? 'text-white' : 'text-black'}>Create and open a new presentation instantly.</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>New Presentation</h3>
+            <p className={isDark ? 'text-white' : 'text-gray-600'}>Create and open a new presentation instantly.</p>
           </button>
           
           <button
@@ -116,14 +116,14 @@ const Landing = () => {
                 navigate('/login');
               }
             }}
-            className="card-themed p-6 text-center rounded-lg hover:shadow-lg transition-all"
+            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
             title={user ? 'View your favourites' : 'Login to access favourites'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiStarLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Favourites</h3>
-            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Favourites</h3>
+            <p className={isDark ? 'text-white' : 'text-gray-600'}>{user ? 'Your starred presentations.' : 'Sign in to access favourites.'}</p>
           </button>
           
           <button
@@ -139,14 +139,14 @@ const Landing = () => {
                 navigate('/login');
               }
             }}
-            className="card-themed p-6 text-center rounded-lg hover:shadow-lg transition-all"
+            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
             title={user ? 'View your history' : 'Login to access history'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiHistoryLine className="text-2xl" style={{ color: '#F0A500' }} />
             </div>
-            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>History</h3>
-            <p className={isDark ? 'text-white' : 'text-black'}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>History</h3>
+            <p className={isDark ? 'text-white' : 'text-gray-600'}>{user ? 'Recently worked on presentations.' : 'Sign in to access history.'}</p>
           </button>
         </div>
 
@@ -156,17 +156,17 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="py-12 mt-20">
-        <div className={`container mx-auto px-6 text-center ${isDark ? 'text-white' : 'text-black'}`}>
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-8 h-8" />
+        <div className={`container mx-auto px-6 text-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <div className="flex items-center justify-center space-x-1 mb-4">
+            <img src="/src/assets/icons/DOCS-LOGO-final-transparent.png" alt="Logo" className="w-12 h-12" />
             <span className="text-2xl font-bold nav-title">EtherXPPT</span>
           </div>
           <p className="mb-4">Professional presentation software for modern teams</p>
           <div className="flex justify-center space-x-6">
-            <Link to="/login" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Login</Link>
-            <Link to="/signup" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Sign Up</Link>
-            <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Documentation</a>
-            <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}>Support</a>
+            <Link to="/login" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-gray-700 hover:text-gray-900'}`}>Login</Link>
+            <Link to="/signup" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-gray-700 hover:text-gray-900'}`}>Sign Up</Link>
+            <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-gray-700 hover:text-gray-900'}`}>Documentation</a>
+            <a href="#" className={`${isDark ? 'text-white hover:text-gray-300' : 'text-gray-700 hover:text-gray-900'}`}>Support</a>
           </div>
 
         </div>

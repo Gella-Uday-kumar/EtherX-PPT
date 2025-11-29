@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
+import { useTheme } from '../contexts/ThemeContext';
 import ChartComponent from './ChartComponent';
 import ChartRenderer from './ChartRenderer';
 import TableComponent from './TableComponent';
@@ -9,6 +10,7 @@ import AdvancedTableEditor from './AdvancedTableEditor';
 
 const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, snapToGrid = false, zoomLevel = 100 }) => {
   const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta, animationPreview, selectedAnimation } = usePresentation();
+  const { isDark } = useTheme();
   const [selectedElement, setSelectedElement] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -73,7 +75,9 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
   };
 
   return (
-    <div className="editor-wrapper h-[calc(100vh-80px)] overflow-y-scroll overflow-x-hidden p-6">
+    <div
+      className="editor-wrapper h-[calc(100vh-80px)] overflow-y-scroll overflow-x-hidden p-6 bg-white dark:bg-black"
+    >
       {/* Toolbar */}
       <div className="mb-6 panel">
         <div className="p-4">
@@ -95,7 +99,7 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             style={{
               width: '960px',
               height: '540px',
-              backgroundColor: slide.background || '#ffffff'
+              backgroundColor: slide.background || (isDark ? '#000000' : '#ffffff')
             }}
           >
             {/* Layout regions */}

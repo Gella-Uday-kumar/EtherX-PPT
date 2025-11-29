@@ -256,9 +256,18 @@ const Dashboard = () => {
     const flow = localStorage.getItem('authFlow') || 'login';
     setAuthFlow(flow);
 
-    // Load selected template if available
+    // Load template from navigation state (from home page) or localStorage (from template library)
+    const templateFromState = location.state?.template;
     const selectedTemplate = localStorage.getItem('selectedTemplate');
-    if (selectedTemplate) {
+
+    if (templateFromState && templateFromState.slides && templateFromState.slides.length > 0) {
+      // Template from home page navigation
+      setSlides(templateFromState.slides);
+      setCurrentSlide(0);
+      localStorage.setItem('undoHistory', JSON.stringify([templateFromState.slides]));
+      setPresentationMeta({ ...presentationMeta, title: templateFromState.name || 'Untitled', updatedAt: new Date().toISOString() });
+    } else if (selectedTemplate) {
+      // Template from template library
       try {
         const template = JSON.parse(selectedTemplate);
         if (template.slides && template.slides.length > 0) {
@@ -447,15 +456,15 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-neutral-50 dark:bg-neutral-900">
+    <div className="h-screen flex flex-col bg-neutral-50 dark:bg-black">
       <KeyboardShortcuts />
       
       {/* PowerPoint-style Ribbon Menu */}
-      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="bg-white dark:bg-black border-b border-neutral-200 dark:border-neutral-800">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b">
-          <div className="flex items-center space-x-3">
-            <img src="/DOCS-LOGO-final-transparent.png" alt="EtherX Logo" className="w-6 h-6" />
+          <div className="flex items-center space-x-1">
+            <img src="/DOCS-LOGO-final-transparent.png" alt="EtherX Logo" className="w-10 h-10" />
             <button onClick={() => navigate('/')} className="text-sm font-medium hover:underline">EtherX PowerPoint</button>
             <span className="text-xs text-gray-500">- {presentationMeta.title || 'Untitled'}</span>
           </div>
@@ -579,7 +588,7 @@ const Dashboard = () => {
         </div>
 
         {/* Ribbon Content */}
-        <div className="px-4 py-3 bg-white dark:bg-neutral-900">
+        <div className="px-4 py-3 bg-white dark:bg-black">
 
           {activeRibbonTab === 'File' && (
             <div className="flex items-center space-x-8">
@@ -751,7 +760,8 @@ const Dashboard = () => {
                 <div className="flex items-center space-x-1">
                   <button onClick={() => {
                     saveToHistory();
-                    const newSlide = { id: Date.now(), title: `Slide ${slides.length + 1}`, content: 'Click to add content', background: '#ffffff', textColor: '#000000', layout: 'title-content', elements: [] };
+                    const currentSlideStyle = slides[currentSlide] || {};
+                    const newSlide = { id: Date.now(), title: `Slide ${slides.length + 1}`, content: 'Click to add content', background: currentSlideStyle.background || '#ffffff', textColor: currentSlideStyle.textColor || '#000000', layout: 'title-content', elements: [] };
                     setSlides([...slides, newSlide]);
                   }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                     <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -808,7 +818,8 @@ const Dashboard = () => {
               <div className="flex flex-col items-center">
                 <div className="flex items-center space-x-1">
                   <button onClick={() => {
-                    const newSlide = { id: Date.now(), title: `Slide ${slides.length + 1}`, content: 'Click to add content', background: '#ffffff', textColor: '#000000', layout: 'title-content', elements: [] };
+                    const currentSlideStyle = slides[currentSlide] || {};
+                    const newSlide = { id: Date.now(), title: `Slide ${slides.length + 1}`, content: 'Click to add content', background: currentSlideStyle.background || '#ffffff', textColor: currentSlideStyle.textColor || '#000000', layout: 'title-content', elements: [] };
                     setSlides([...slides, newSlide]);
                   }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                     <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -1882,7 +1893,7 @@ const Dashboard = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex">
+        <div className="flex-1 flex bg-white dark:bg-black">
           {/* Sidebar */}
           <Sidebar />
 

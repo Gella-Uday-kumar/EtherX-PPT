@@ -64,12 +64,10 @@ const Home = () => {
         ...template,
         slides: slidesWithUniqueIds
       };
-      localStorage.setItem('selectedTemplate', JSON.stringify(templateWithUniqueIds));
+      navigate('/dashboard', { state: { template: templateWithUniqueIds } });
     } else {
-      localStorage.removeItem('selectedTemplate');
+      navigate('/dashboard');
     }
-
-    navigate('/dashboard');
   };
 
   const handleOpenFile = () => {
@@ -138,8 +136,8 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <img src="/DOCS-LOGO-final-transparent.png" alt="EtherX Logo" className="w-8 h-8" />
+              <div className="flex items-center space-x-1">
+                <img src="/DOCS-LOGO-final-transparent.png" alt="EtherX Logo" className="w-12 h-12" />
                 <h1 className="text-xl font-semibold" style={{ color: '#F0A500' }}>PowerPoint</h1>
               </div>
               

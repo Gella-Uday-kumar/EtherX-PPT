@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { usePresentation } from '../contexts/PresentationContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Sidebar = () => {
   const { slides, currentSlide, setCurrentSlide, addSlide, deleteSlide, duplicateSlide, reorderSlides } = usePresentation();
+  const { isDark } = useTheme();
   const [draggedSlide, setDraggedSlide] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
   const [showContextMenu, setShowContextMenu] = useState(null);
@@ -37,9 +39,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="sidebar scrollbar-thin">
+    <div className="sidebar scrollbar-thin" style={{ backgroundColor: isDark ? '#1B1A17' : '#ffffff' }}>
       {/* Header */}
-      <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="p-4" style={{ borderBottom: `1px solid ${isDark ? '#F0A500' : '#E5E7EB'}` }}>
         <div className="flex items-center justify-between mb-4">
           {/* Themed header title uses nav-title for consistent styling */}
           <h3 className="text-lg font-semibold nav-title">Slides</h3>
@@ -95,20 +97,29 @@ const Sidebar = () => {
               </div>
               
               {/* Slide Preview */}
-              <div 
-                className="aspect-video bg-neutral-50 dark:bg-neutral-900 rounded border border-neutral-200 dark:border-neutral-700 p-2 text-xs overflow-hidden"
-                style={{ backgroundColor: slide.background || '#ffffff' }}
+              <div
+                className="aspect-video rounded p-2 text-xs overflow-hidden"
+                style={{
+                  backgroundColor: slide.background || (isDark ? '#1B1A17' : '#F9FAFB'),
+                  border: `1px solid ${isDark ? 'rgba(240, 165, 0, 0.3)' : '#E5E7EB'}`
+                }}
               >
                 {/* Title Preview */}
                 {slide.title && (
-                  <div className="font-semibold text-neutral-800 dark:text-neutral-200 truncate mb-1">
+                  <div
+                    className="font-semibold truncate mb-1"
+                    style={{ color: isDark ? '#FFFFFF' : '#1F2937' }}
+                  >
                     {slide.title.replace(/<[^>]*>/g, '').substring(0, 20)}...
                   </div>
                 )}
-                
+
                 {/* Content Preview */}
                 {slide.content && (
-                  <div className="text-neutral-600 dark:text-neutral-400 text-xs leading-tight">
+                  <div
+                    className="text-xs leading-tight"
+                    style={{ color: isDark ? '#E5E7EB' : '#6B7280' }}
+                  >
                     {slide.content.replace(/<[^>]*>/g, '').substring(0, 40)}...
                   </div>
                 )}

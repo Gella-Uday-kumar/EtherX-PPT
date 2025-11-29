@@ -1,20 +1,22 @@
 /* Custom Theme Colors */
 :root {
-  --primary-bg: #1B1A17;
-  --primary-text: #F0A500;
-  --secondary-text: #E5E7EB;
-  --card-bg: #374151;
-  --border-color: #4B5563;
-  --hover-bg: #4B5563;
+  --primary-bg: #ffffff;
+  --primary-text: #000000;
+  --secondary-text: #6B7280;
+  --card-bg: #F9FAFB;
+  --border-color: #E5E7EB;
+  --hover-bg: #F3F4F6;
 }
 
-/* Dark mode specific variables */
+/* Dark mode specific variables - Black & Gold theme */
 .dark {
-  --primary-bg: #000000;
-  --secondary-bg: #1a1a1a;
-  --text-primary: #ffffff;
-  --text-secondary: #e5e7eb;
+  --primary-bg: var(--primary-dark, #1B1A17);
+  --primary-text: var(--accent-gold, #F0A500);
+  --secondary-bg: #000000;
+  --text-primary: var(--text-light, #FFFFFF);
+  --text-secondary: #E5E7EB;
   --border-dark: #374151;
+  --accent-bg: rgba(240, 165, 0, 0.1);
 }
 
 /* Global theme overrides */
@@ -97,63 +99,157 @@
   background: #444;
 }
 
-/* Additional dark mode fixes */
-.dark input, .dark textarea, .dark select {
+/* Dashboard dark theme overrides - Black & Gold */
+.dark .bg-white {
+  background-color: var(--primary-dark) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: var(--primary-dark) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: rgba(27, 26, 23, 0.8) !important;
+}
+
+.dark .bg-gray-800 {
+  background-color: var(--primary-dark) !important;
+}
+
+.dark .bg-neutral-50 {
+  background-color: var(--primary-dark) !important;
+}
+
+.dark .bg-neutral-900 {
   background-color: #000000 !important;
-  color: #ffffff !important;
-  border-color: #F0A500 !important;
+}
+
+.dark .text-gray-900 {
+  color: var(--text-light) !important;
+}
+
+.dark .text-gray-700 {
+  color: var(--text-light) !important;
+}
+
+.dark .text-gray-600 {
+  color: #E5E7EB !important;
+}
+
+.dark .text-gray-500 {
+  color: #9CA3AF !important;
+}
+
+.dark .text-neutral-700 {
+  color: var(--text-light) !important;
+}
+
+.dark .text-neutral-300 {
+  color: var(--text-light) !important;
+}
+
+.dark .border-gray-200 {
+  border-color: var(--accent-gold) !important;
+}
+
+.dark .border-gray-300 {
+  border-color: rgba(240, 165, 0, 0.3) !important;
+}
+
+.dark .border-gray-600 {
+  border-color: var(--accent-gold) !important;
+}
+
+.dark .border-neutral-200 {
+  border-color: var(--accent-gold) !important;
+}
+
+.dark .border-neutral-800 {
+  border-color: rgba(240, 165, 0, 0.5) !important;
+}
+
+/* Input and form elements */
+.dark input, .dark textarea, .dark select {
+  background-color: var(--primary-dark) !important;
+  color: var(--text-light) !important;
+  border-color: var(--accent-gold) !important;
 }
 
 .dark input::placeholder, .dark textarea::placeholder {
   color: rgba(240, 165, 0, 0.6) !important;
 }
 
-.dark .bg-white {
+/* Hover states */
+.dark .hover\:bg-gray-100:hover {
+  background-color: rgba(240, 165, 0, 0.1) !important;
+}
+
+.dark .hover\:bg-gray-200:hover {
+  background-color: rgba(240, 165, 0, 0.15) !important;
+}
+
+.dark .hover\:bg-neutral-100:hover {
+  background-color: rgba(240, 165, 0, 0.1) !important;
+}
+
+/* Ribbon and menu specific overrides */
+.dark .bg-gray-50 {
+  background-color: var(--primary-dark) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: rgba(27, 26, 23, 0.9) !important;
+}
+
+.dark .bg-gray-800 {
+  background-color: var(--primary-dark) !important;
+}
+
+.dark .bg-neutral-900 {
   background-color: #000000 !important;
 }
 
-.dark .text-gray-900 {
-  color: #ffffff !important;
+.dark .text-neutral-700 {
+  color: var(--text-light) !important;
 }
 
-.dark .text-gray-700 {
-  color: #e5e7eb !important;
+.dark .text-neutral-300 {
+  color: var(--text-light) !important;
 }
 
-.dark .text-gray-600 {
-  color: #d1d5db !important;
+.dark .border-neutral-200 {
+  border-color: var(--accent-gold) !important;
 }
 
-.dark .text-gray-500 {
-  color: #9ca3af !important;
+.dark .border-neutral-800 {
+  border-color: rgba(240, 165, 0, 0.5) !important;
 }
 
-.dark .border-gray-100 {
-  border-color: #1f2937 !important;
+/* Button and interactive elements */
+.dark button {
+  background-color: var(--primary-dark) !important;
+  color: var(--text-light) !important;
+  border-color: var(--accent-gold) !important;
 }
 
-.dark .border-gray-200 {
-  border-color: #374151 !important;
+.dark button:hover {
+  background-color: rgba(240, 165, 0, 0.1) !important;
 }
 
-.dark .border-gray-300 {
-  border-color: #4b5563 !important;
+/* Specific overrides for dropdown menus and panels */
+.dark .dropdown-menu {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--accent-gold) !important;
 }
 
-.dark .border-gray-400 {
-  border-color: #6b7280 !important;
+.dark .panel {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--accent-gold) !important;
 }
 
-.dark .border-gray-500 {
-  border-color: #9ca3af !important;
-}
-
-.dark .border-gray-600 {
-  border-color: #d1d5db !important;
-}
-
-.dark .border-gray-700 {
-  border-color: #e5e7eb !important;
+.dark .modal {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--accent-gold) !important;
 }
 
 /* Additional border style fixes for dark mode */
