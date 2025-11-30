@@ -24,20 +24,25 @@ const AnimationPanel = () => {
   const addAnimation = (target, animationType) => {
     // Remove any existing animations for this target to ensure only one animation per target
     const filteredAnimations = animations.filter(a => a.target !== target);
-    
+
+    // Use animation defaults from slide if available, otherwise use hardcoded defaults
+    const defaults = slide.animationDefaults || {};
+    const defaultDuration = defaults.duration ? defaults.duration * 1000 : 1000; // Convert seconds to ms
+    const defaultDelay = defaults.delay ? defaults.delay * 1000 : 0; // Convert seconds to ms
+
     const newAnimation = {
       id: Date.now(),
       target, // 'title' | 'content' | elementId
       type: animationType,
-      duration: 1000,
-      delay: 0,
+      duration: defaultDuration,
+      delay: defaultDelay,
       order: filteredAnimations.length
     };
-    
+
     // Update slide with filtered animations plus the new one
     const updatedAnimations = [...filteredAnimations, newAnimation];
     updateSlide(currentSlide, { animations: updatedAnimations });
-    
+
     // Update the selected animation to track current selection
     setSelectedAnimation({ target, type: animationType, id: newAnimation.id });
   };

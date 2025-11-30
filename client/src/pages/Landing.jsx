@@ -66,15 +66,15 @@ const Landing = () => {
       {/* Hero Section */}
       <main className="container mx-auto px-6 py-20">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in" style={{ color: '#F0A500' }}>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fadeIn" style={{ color: '#F0A500' }}>
             Create Amazing
             <span className={isDark ? 'text-white' : 'text-gray-900'}> Presentations</span>
           </h1>
-          <p className={`text-xl mb-8 animate-slide-in-up ${isDark ? 'text-white' : 'text-gray-700'}`}>
+          <p className={`text-xl mb-8 animate-slideInUp ${isDark ? 'text-white' : 'text-gray-700'}`}>
             Professional PowerPoint-like editor with real-time collaboration, 
             modern design tools, and seamless workflow.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-bounce-in">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-bounce">
             <Link to="/signup" className="btn-primary text-lg px-8 py-3">
               Get Started Free
             </Link>
@@ -94,7 +94,7 @@ const Landing = () => {
         <div className="grid md:grid-cols-3 gap-8 mt-20">
           <button
             onClick={() => navigate('/dashboard')}
-            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
+            className="panel p-6 text-center animate-slideInLeft hover:shadow-glow transition"
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
               <RiFileAddLine className="text-2xl" style={{ color: '#F0A500' }} />
@@ -116,7 +116,7 @@ const Landing = () => {
                 navigate('/login');
               }
             }}
-            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
+            className="panel p-6 text-center animate-slideInLeft hover:shadow-glow transition"
             title={user ? 'View your favourites' : 'Login to access favourites'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">
@@ -139,7 +139,7 @@ const Landing = () => {
                 navigate('/login');
               }
             }}
-            className="panel p-6 text-center animate-slide-in-left hover:shadow-glow transition"
+            className="panel p-6 text-center animate-slideInLeft hover:shadow-glow transition"
             title={user ? 'View your history' : 'Login to access history'}
           >
             <div className="w-12 h-12 bg-transparent rounded-lg mx-auto mb-4 flex items-center justify-center">

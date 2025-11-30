@@ -21,16 +21,171 @@ const ImageEditor = ({ element, onUpdate, onDelete, isSelected, onSelect }) => {
     if (isCropping && element.src) {
       const img = new Image();
       img.onload = () => {
+        // Calculate the actual displayed image dimensions and position
+        const scale = Math.max(element.width / img.width, element.height / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const offsetX = (element.width - scaledWidth) / 2;
+        const offsetY = (element.height - scaledHeight) / 2;
+
+        // Set crop area to cover most of the visible image area
+        const margin = 20;
         setCropArea({
-          x: 20,
-          y: 20,
-          width: Math.min(element.width - 40, img.width),
-          height: Math.min(element.height - 40, img.height)
+          x: Math.max(0, offsetX + margin),
+          y: Math.max(0, offsetY + margin),
+          width: Math.min(element.width - 2 * margin, scaledWidth - 2 * margin),
+          height: Math.min(element.height - 2 * margin, scaledHeight - 2 * margin)
         });
       };
       img.src = element.src;
     }
   }, [isCropping, element.src, element.width, element.height]);
+
+  // Global mouse event handlers for dragging and resizing
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (isCropping) {
+        // Handle crop area dragging
+        if (isDragging) {
+          const canvas = document.querySelector('.slide-canvas');
+          if (!canvas) return;
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left - dragOffset.x;
+          const y = e.clientY - rect.top - dragOffset.y;
+
+          setCropArea(prev => ({
+            ...prev,
+            x: Math.max(0, Math.min(x, element.width - prev.width)),
+            y: Math.max(0, Math.min(y, element.height - prev.height))
+          }));
+        }
+        // Handle crop area resizing
+        else if (isResizing && resizeHandle) {
+          const canvas = document.querySelector('.slide-canvas');
+          if (!canvas) return;
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          setCropArea(prev => {
+            let newArea = { ...prev };
+
+            switch (resizeHandle) {
+              case 'nw':
+                newArea.x = Math.min(mouseX, prev.x + prev.width - 20);
+                newArea.y = Math.min(mouseY, prev.y + prev.height - 20);
+                newArea.width = prev.x + prev.width - newArea.x;
+                newArea.height = prev.y + prev.height - newArea.y;
+                break;
+              case 'ne':
+                newArea.y = Math.min(mouseY, prev.y + prev.height - 20);
+                newArea.width = Math.max(20, mouseX - prev.x);
+                newArea.height = prev.y + prev.height - newArea.y;
+                break;
+              case 'sw':
+                newArea.x = Math.min(mouseX, prev.x + prev.width - 20);
+                newArea.width = prev.x + prev.width - newArea.x;
+                newArea.height = Math.max(20, mouseY - prev.y);
+                break;
+              case 'se':
+                newArea.width = Math.max(20, mouseX - prev.x);
+                newArea.height = Math.max(20, mouseY - prev.y);
+                break;
+            }
+
+            return newArea;
+          });
+        }
+      } else {
+        // Handle element dragging
+        if (isDragging) {
+          const canvas = document.querySelector('.slide-canvas');
+          if (!canvas) return;
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left - dragOffset.x;
+          const y = e.clientY - rect.top - dragOffset.y;
+
+          onUpdate({
+            x: Math.max(0, x),
+            y: Math.max(0, y)
+          });
+        }
+        // Handle element resizing
+        else if (isResizing && resizeHandle) {
+          const canvas = document.querySelector('.slide-canvas');
+          if (!canvas) return;
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          let newWidth = element.width;
+          let newHeight = element.height;
+          let newX = element.x;
+          let newY = element.y;
+
+          switch (resizeHandle) {
+            case 'nw':
+              newWidth = Math.max(20, element.x + element.width - mouseX);
+              newHeight = Math.max(20, element.y + element.height - mouseY);
+              newX = Math.max(0, mouseX);
+              newY = Math.max(0, mouseY);
+              break;
+            case 'ne':
+              newWidth = Math.max(20, mouseX - element.x);
+              newHeight = Math.max(20, element.y + element.height - mouseY);
+              newY = Math.max(0, mouseY);
+              break;
+            case 'sw':
+              newWidth = Math.max(20, element.x + element.width - mouseX);
+              newHeight = Math.max(20, mouseY - element.y);
+              newX = Math.max(0, mouseX);
+              break;
+            case 'se':
+              newWidth = Math.max(20, mouseX - element.x);
+              newHeight = Math.max(20, mouseY - element.y);
+              break;
+            case 'n':
+              newHeight = Math.max(20, element.y + element.height - mouseY);
+              newY = Math.max(0, mouseY);
+              break;
+            case 's':
+              newHeight = Math.max(20, mouseY - element.y);
+              break;
+            case 'w':
+              newWidth = Math.max(20, element.x + element.width - mouseX);
+              newX = Math.max(0, mouseX);
+              break;
+            case 'e':
+              newWidth = Math.max(20, mouseX - element.x);
+              break;
+          }
+
+          onUpdate({
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight
+          });
+        }
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+      setResizeHandle(null);
+    };
+
+    if (isDragging || isResizing) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, isResizing, resizeHandle, dragOffset, element, onUpdate, isCropping]);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -55,138 +210,6 @@ const ImageEditor = ({ element, onUpdate, onDelete, isSelected, onSelect }) => {
     setResizeHandle(handle);
   }, [onSelect]);
 
-  const handleMouseMove = useCallback((e) => {
-    if (isCropping) {
-      // Handle crop area dragging
-      if (isDragging) {
-        const canvas = e.currentTarget.closest('.slide-canvas');
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left - dragOffset.x;
-        const y = e.clientY - rect.top - dragOffset.y;
-
-        setCropArea(prev => ({
-          ...prev,
-          x: Math.max(0, Math.min(x, element.width - prev.width)),
-          y: Math.max(0, Math.min(y, element.height - prev.height))
-        }));
-      }
-      // Handle crop area resizing
-      else if (isResizing && resizeHandle) {
-        const canvas = e.currentTarget.closest('.slide-canvas');
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        setCropArea(prev => {
-          let newArea = { ...prev };
-
-          switch (resizeHandle) {
-            case 'nw':
-              newArea.x = Math.min(mouseX, prev.x + prev.width - 20);
-              newArea.y = Math.min(mouseY, prev.y + prev.height - 20);
-              newArea.width = prev.x + prev.width - newArea.x;
-              newArea.height = prev.y + prev.height - newArea.y;
-              break;
-            case 'ne':
-              newArea.y = Math.min(mouseY, prev.y + prev.height - 20);
-              newArea.width = Math.max(20, mouseX - prev.x);
-              newArea.height = prev.y + prev.height - newArea.y;
-              break;
-            case 'sw':
-              newArea.x = Math.min(mouseX, prev.x + prev.width - 20);
-              newArea.width = prev.x + prev.width - newArea.x;
-              newArea.height = Math.max(20, mouseY - prev.y);
-              break;
-            case 'se':
-              newArea.width = Math.max(20, mouseX - prev.x);
-              newArea.height = Math.max(20, mouseY - prev.y);
-              break;
-          }
-
-          return newArea;
-        });
-      }
-    } else {
-      // Handle element dragging
-      if (isDragging) {
-        const canvas = e.currentTarget.closest('.slide-canvas');
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left - dragOffset.x;
-        const y = e.clientY - rect.top - dragOffset.y;
-
-        onUpdate({
-          x: Math.max(0, x),
-          y: Math.max(0, y)
-        });
-      }
-      // Handle element resizing
-      else if (isResizing && resizeHandle) {
-        const canvas = e.currentTarget.closest('.slide-canvas');
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        let newWidth = element.width;
-        let newHeight = element.height;
-        let newX = element.x;
-        let newY = element.y;
-
-        switch (resizeHandle) {
-          case 'nw':
-            newWidth = Math.max(20, element.x + element.width - mouseX);
-            newHeight = Math.max(20, element.y + element.height - mouseY);
-            newX = Math.max(0, mouseX);
-            newY = Math.max(0, mouseY);
-            break;
-          case 'ne':
-            newWidth = Math.max(20, mouseX - element.x);
-            newHeight = Math.max(20, element.y + element.height - mouseY);
-            newY = Math.max(0, mouseY);
-            break;
-          case 'sw':
-            newWidth = Math.max(20, element.x + element.width - mouseX);
-            newHeight = Math.max(20, mouseY - element.y);
-            newX = Math.max(0, mouseX);
-            break;
-          case 'se':
-            newWidth = Math.max(20, mouseX - element.x);
-            newHeight = Math.max(20, mouseY - element.y);
-            break;
-          case 'n':
-            newHeight = Math.max(20, element.y + element.height - mouseY);
-            newY = Math.max(0, mouseY);
-            break;
-          case 's':
-            newHeight = Math.max(20, mouseY - element.y);
-            break;
-          case 'w':
-            newWidth = Math.max(20, element.x + element.width - mouseX);
-            newX = Math.max(0, mouseX);
-            break;
-          case 'e':
-            newWidth = Math.max(20, mouseX - element.x);
-            break;
-        }
-
-        onUpdate({
-          x: newX,
-          y: newY,
-          width: newWidth,
-          height: newHeight
-        });
-      }
-    }
-  }, [isCropping, isDragging, isResizing, resizeHandle, dragOffset, element, onUpdate]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    setIsResizing(false);
-    setResizeHandle(null);
-  }, []);
 
   const applyCrop = useCallback(() => {
     if (!element.src || !canvasRef.current) return;
@@ -196,6 +219,29 @@ const ImageEditor = ({ element, onUpdate, onDelete, isSelected, onSelect }) => {
     const img = new Image();
 
     img.onload = () => {
+      // Calculate scale factor between display size and source image size
+      const scaleX = img.width / element.width;
+      const scaleY = img.height / element.height;
+      const scale = Math.max(scaleX, scaleY); // object-cover scale
+
+      // Calculate offset for object-cover centering
+      const scaledWidth = img.width / scale;
+      const scaledHeight = img.height / scale;
+      const offsetX = (element.width - scaledWidth) / 2;
+      const offsetY = (element.height - scaledHeight) / 2;
+
+      // Convert crop coordinates from display space to source space
+      const sourceX = (cropArea.x - offsetX) * scale;
+      const sourceY = (cropArea.y - offsetY) * scale;
+      const sourceWidth = cropArea.width * scale;
+      const sourceHeight = cropArea.height * scale;
+
+      // Ensure coordinates are within image bounds
+      const clampedX = Math.max(0, Math.min(sourceX, img.width - sourceWidth));
+      const clampedY = Math.max(0, Math.min(sourceY, img.height - sourceHeight));
+      const clampedWidth = Math.min(sourceWidth, img.width - clampedX);
+      const clampedHeight = Math.min(sourceHeight, img.height - clampedY);
+
       // Set canvas size to crop area
       canvas.width = cropArea.width;
       canvas.height = cropArea.height;
@@ -203,7 +249,7 @@ const ImageEditor = ({ element, onUpdate, onDelete, isSelected, onSelect }) => {
       // Draw cropped portion
       ctx.drawImage(
         img,
-        cropArea.x, cropArea.y, cropArea.width, cropArea.height, // Source rectangle
+        clampedX, clampedY, clampedWidth, clampedHeight, // Source rectangle
         0, 0, cropArea.width, cropArea.height // Destination rectangle
       );
 
@@ -219,7 +265,7 @@ const ImageEditor = ({ element, onUpdate, onDelete, isSelected, onSelect }) => {
     };
 
     img.src = element.src;
-  }, [element.src, cropArea, onUpdate]);
+  }, [element.src, element.width, element.height, cropArea, onUpdate]);
 
   const cancelCrop = useCallback(() => {
     setIsCropping(false);
@@ -237,9 +283,12 @@ const ImageEditor = ({ element, onUpdate, onDelete, isSelected, onSelect }) => {
         cursor: isCropping ? 'default' : 'move'
       }}
       onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={() => {
+        if (!isDragging && !isResizing) return;
+        setIsDragging(false);
+        setIsResizing(false);
+        setResizeHandle(null);
+      }}
     >
       {/* Image */}
       <img

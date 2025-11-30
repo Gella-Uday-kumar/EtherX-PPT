@@ -21,17 +21,18 @@ const PresenterMode = ({ isActive, onExit }) => {
 
   // Animation system for presenter mode
   const getAnimationStyle = (target) => {
-    if (!animationState.active) return {};
+    if (!animationState.active) return { className: '', style: {} };
 
     const animation = animationState.animations.find(a => a.target === target);
-    if (!animation) return {};
+    if (!animation) return { className: '', style: {} };
 
     return {
-      animationName: animation.type,
-      animationDuration: `${animation.duration}ms`,
-      animationDelay: `${animation.delay}ms`,
-      animationFillMode: 'forwards',
-      animationTimingFunction: 'ease-out'
+      className: `animate-${animation.type}`,
+      style: {
+        animationDuration: `${animation.duration}ms`,
+        animationDelay: `${animation.delay}ms`,
+        animationFillMode: 'forwards'
+      }
     };
   };
 
@@ -154,12 +155,12 @@ const PresenterMode = ({ isActive, onExit }) => {
     if (isActive && slides[currentSlide]) {
       const slide = slides[currentSlide];
       const slideElement = presenterRef.current?.querySelector('.slide-content');
-      
+
       if (slideElement) {
         if (slide?.transition && slide.transition !== 'none') {
           slideElement.style.opacity = '0';
           slideElement.style.transform = getTransitionTransform(slide.transition, 'enter');
-          
+
           setTimeout(() => {
             slideElement.style.transition = `all ${slide.transitionDuration || 1}s ease-in-out`;
             slideElement.style.opacity = '1';
@@ -310,20 +311,20 @@ const PresenterMode = ({ isActive, onExit }) => {
                     <>
                       {slide.title && (
                         <div
-                          className="absolute top-12 left-12 right-12 text-6xl font-bold text-center outline-none"
+                          className={`absolute top-12 left-12 right-12 text-6xl font-bold text-center outline-none ${getAnimationStyle('title').className}`}
                           style={{
                             color: slide.textColor || '#1f2937',
-                            ...getAnimationStyle('title')
+                            ...getAnimationStyle('title').style
                           }}
                           dangerouslySetInnerHTML={{ __html: slide.title }}
                         />
                       )}
                       {slide.content && (
                         <div
-                          className="absolute top-32 left-12 right-12 bottom-12 text-3xl outline-none"
+                          className={`absolute top-32 left-12 right-12 bottom-12 text-3xl outline-none ${getAnimationStyle('content').className}`}
                           style={{
                             color: slide.textColor || '#374151',
-                            ...getAnimationStyle('content')
+                            ...getAnimationStyle('content').style
                           }}
                           dangerouslySetInnerHTML={{ __html: slide.content }}
                         />
@@ -335,10 +336,10 @@ const PresenterMode = ({ isActive, onExit }) => {
                 if (layoutType === 'title-only') {
                   return slide.title && (
                     <div
-                      className="absolute top-24 left-12 right-12 text-6xl font-bold text-center outline-none"
+                      className={`absolute top-24 left-12 right-12 text-6xl font-bold text-center outline-none ${getAnimationStyle('title').className}`}
                       style={{
                         color: slide.textColor || '#1f2937',
-                        ...getAnimationStyle('title')
+                        ...getAnimationStyle('title').style
                       }}
                       dangerouslySetInnerHTML={{ __html: slide.title }}
                     />
@@ -348,10 +349,10 @@ const PresenterMode = ({ isActive, onExit }) => {
                 if (layoutType === 'content-only') {
                   return slide.content && (
                     <div
-                      className="absolute top-16 left-12 right-12 bottom-12 text-3xl outline-none"
+                      className={`absolute top-16 left-12 right-12 bottom-12 text-3xl outline-none ${getAnimationStyle('content').className}`}
                       style={{
                         color: slide.textColor || '#374151',
-                        ...getAnimationStyle('content')
+                        ...getAnimationStyle('content').style
                       }}
                       dangerouslySetInnerHTML={{ __html: slide.content }}
                     />
@@ -440,7 +441,7 @@ const PresenterMode = ({ isActive, onExit }) => {
               {screenMode === 'normal' && slide.elements && slide.elements.map((element) => (
                 <div
                   key={element.id}
-                  className="absolute"
+                  className={`absolute ${getAnimationStyle(element.id).className}`}
                   style={{
                     left: `${element.x}px`,
                     top: `${element.y}px`,
@@ -451,7 +452,7 @@ const PresenterMode = ({ isActive, onExit }) => {
                     color: element.color,
                     backgroundColor: element.backgroundColor,
                     border: element.borderWidth ? `${element.borderWidth}px ${element.borderStyle || 'solid'} ${element.borderColor || '#000000'}` : 'none',
-                    ...getAnimationStyle(element.id)
+                    ...getAnimationStyle(element.id).style
                   }}
                 >
                   {element.type === 'textbox' && (
@@ -582,6 +583,7 @@ const PresenterMode = ({ isActive, onExit }) => {
                       </table>
                     </div>
                   )}
+
 
                   {element.type === 'equation' && (
                     <div

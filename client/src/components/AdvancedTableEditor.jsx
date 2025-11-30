@@ -18,7 +18,7 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
   const handleCellClick = (rowIndex, colIndex, e) => {
     e.stopPropagation();
     setIsEditingCell(true);
-    
+
     if (e.ctrlKey || e.metaKey) {
       // Multi-select
       const cellKey = `${rowIndex}-${colIndex}`;
@@ -36,7 +36,13 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
     const rect = e.target.getBoundingClientRect();
     setToolbarPosition({ x: rect.left, y: rect.top - 50 });
     setShowToolbar(true);
-    
+
+    // Focus the cell for editing
+    const cell = e.target.closest('td');
+    if (cell) {
+      cell.focus();
+    }
+
     onCellSelect({ rowIndex, colIndex });
   };
 
@@ -209,6 +215,7 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
                 <td
                   key={colIndex}
                   contentEditable={true}
+                  spellCheck={true}
                   suppressContentEditableWarning={true}
                   style={getCellStyle(rowIndex, colIndex)}
                   className="p-2 min-w-[60px] min-h-[30px] border cursor-text outline-none focus:bg-blue-50 focus:border-blue-500"
@@ -221,16 +228,8 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
                   onMouseDown={(e) => {
                     e.stopPropagation();
                   }}
-                  onInput={(e) => {
-                    // Update content on input for real-time updates
-                    const content = e.target.innerHTML;
-                    const newData = [...tableData];
-                    if (!newData[rowIndex]) newData[rowIndex] = [];
-                    newData[rowIndex][colIndex] = content;
-                    onUpdate({ data: newData });
-                  }}
                   onBlur={(e) => {
-                    // Ensure final content is saved on blur
+                    // Save content on blur
                     const content = e.target.innerHTML;
                     const newData = [...tableData];
                     if (!newData[rowIndex]) newData[rowIndex] = [];
@@ -238,14 +237,16 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
                     onUpdate({ data: newData });
                   }}
                   onKeyDown={(e) => {
-                    // Allow all keyboard input but prevent canvas shortcuts
+                    // Prevent canvas shortcuts but allow regular typing and common editing shortcuts
                     if (e.ctrlKey || e.metaKey) {
-                      // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z, etc.
-                      if (['a', 'c', 'v', 'x', 'z', 'y'].includes(e.key.toLowerCase())) {
+                      // Allow common editing shortcuts
+                      if (['a', 'c', 'v', 'x', 'z', 'y', 'b', 'i', 'u'].includes(e.key.toLowerCase())) {
                         return; // Allow these
                       }
+                      // Stop other Ctrl/Cmd shortcuts from reaching canvas
+                      e.stopPropagation();
                     }
-                    e.stopPropagation(); // Stop other shortcuts from reaching canvas
+                    // Allow all regular typing and navigation keys
                   }}
                   dangerouslySetInnerHTML={{ __html: cell || (rowIndex === 0 ? `Header ${colIndex + 1}` : '') }}
                 />
@@ -330,6 +331,22 @@ const AdvancedTableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect
             title="Split Cells"
           >
             Split
+          </button>
+          <button
+            onClick={() => {
+              const newData = [...tableData];
+              selectedCells.forEach(cellKey => {
+                const [row, col] = cellKey.split('-').map(Number);
+                if (newData[row] && newData[row][col] !== undefined) {
+                  newData[row][col] = '';
+                }
+              });
+              onUpdate({ data: newData });
+            }}
+            className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+            title="Clear Cell Content"
+          >
+            Clear
           </button>
         </div>
       )}

@@ -46,16 +46,17 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
   }, [layoutType, currentSlide]);
 
   const getAnimationStyle = (target) => {
-    if (!animationPreview.active) return {};
+    if (!animationPreview.active) return { className: '', style: {} };
     const animations = animationPreview.animations || slide.animations || [];
     const animation = animations.find(a => a.target === target);
-    if (!animation) return {};
+    if (!animation) return { className: '', style: {} };
     return {
-      animationName: animation.type,
-      animationDuration: `${animation.duration}ms`,
-      animationDelay: `${animation.delay}ms`,
-      animationFillMode: 'forwards',
-      animationTimingFunction: 'ease-out'
+      className: `animate-${animation.type}`,
+      style: {
+        animationDuration: `${animation.duration}ms`,
+        animationDelay: `${animation.delay}ms`,
+        animationFillMode: 'forwards'
+      }
     };
   };
 
@@ -106,14 +107,14 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             {layoutType === 'title-content' && (
               <div>
                 <div
-                  className="absolute top-12 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent"
-                  style={{ color: slide.textColor || '#1f2937' }}
+                  className={`absolute top-12 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent ${getAnimationStyle('title').className}`}
+                  style={{ color: slide.textColor || '#1f2937', ...getAnimationStyle('title').style }}
                 >
                   {slide.title || 'Click to add title'}
                 </div>
                 <div
-                  className="absolute top-32 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent"
-                  style={{ color: slide.textColor || '#374151' }}
+                  className={`absolute top-32 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent ${getAnimationStyle('content').className}`}
+                  style={{ color: slide.textColor || '#374151', ...getAnimationStyle('content').style }}
                 >
                   {slide.content || 'Click to add content'}
                 </div>
@@ -121,61 +122,106 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             )}
 
             {/* Dynamic Elements */}
-            {(slide.elements || []).map((element) => (
-              <div
-                key={element.id}
-                data-element-id={element.id}
-                className={`slide-element relative group ${selectedElement === element.id ? 'selected' : ''}`}
-                style={{
-                  position: 'absolute',
-                  left: element.x,
-                  top: element.y,
-                  width: element.width,
-                  height: element.height,
-                  fontSize: element.fontSize,
-                  fontFamily: element.fontFamily,
-                  color: element.color,
-                  backgroundColor: element.backgroundColor
-                }}
-                onClick={() => setSelectedElement(element.id)}
-              >
-                {element.type === 'textbox' && (
-                  <div
-                    className="w-full h-full outline-none p-1 cursor-text"
-                    dangerouslySetInnerHTML={{ __html: element.content }}
+            {(slide.elements || []).map((element) => {
+              if (element.type === 'image') {
+                return (
+                  <ImageEditor
+                    key={element.id}
+                    element={element}
+                    onUpdate={(updates) => updateElement(element.id, updates)}
+                    onDelete={() => deleteElement(element.id)}
+                    isSelected={selectedElement === element.id}
+                    onSelect={() => setSelectedElement(element.id)}
                   />
-                )}
+                );
+              }
 
-                {element.type === 'shape' && (
-                  <div className="w-full h-full">
-                    {element.shapeType === 'rectangle' && (
-                      <div
-                        className="w-full h-full rounded"
-                        style={{
-                          backgroundColor: element.fill,
-                          border: `${element.strokeWidth}px solid ${element.stroke}`
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {selectedElement === element.id && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteElement(element.id);
+              const animStyle = getAnimationStyle(element.id);
+              return (
+                <div
+                  key={element.id}
+                  data-element-id={element.id}
+                  className={`slide-element relative group ${selectedElement === element.id ? 'selected' : ''} ${animStyle.className}`}
+                  style={{
+                    position: 'absolute',
+                    left: element.x,
+                    top: element.y,
+                    width: element.width,
+                    height: element.height,
+                    fontSize: element.fontSize,
+                    fontFamily: element.fontFamily,
+                    color: element.color,
+                    backgroundColor: element.backgroundColor,
+                    ...animStyle.style
+                  }}
+                  onClick={() => setSelectedElement(element.id)}
+                >
+                  {element.type === 'textbox' && (
+                    <div
+                      contentEditable
+                      spellCheck={true}
+                      suppressContentEditableWarning={true}
+                      className="w-full h-full outline-none p-1 cursor-text"
+                      dangerouslySetInnerHTML={{ __html: element.content }}
+                      onBlur={(e) => updateElement(element.id, { content: e.target.innerHTML })}
+                      onKeyDown={(e) => {
+                        // Prevent canvas shortcuts but allow typing and common editing shortcuts
+                        if (e.ctrlKey || e.metaKey) {
+                          if (!['a', 'c', 'v', 'x', 'z', 'y', 'b', 'i', 'u'].includes(e.key.toLowerCase())) {
+                            e.stopPropagation();
+                          }
+                        }
                       }}
-                      className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white text-lg font-medium transition-all duration-200 flex items-center justify-center z-10"
-                      title="Delete element"
+                    />
+                  )}
+
+                  {element.type === 'shape' && (
+                    <div className="w-full h-full">
+                      {element.shapeType === 'rectangle' && (
+                        <div
+                          className="w-full h-full rounded"
+                          style={{
+                            backgroundColor: element.fill,
+                            border: `${element.strokeWidth}px solid ${element.stroke}`
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {element.type === 'equation' && (
+                    <div
+                      className="w-full h-full flex items-center justify-center p-2 border-2 border-gray-300 bg-white rounded"
+                      style={{
+                        fontSize: element.fontSize,
+                        fontFamily: element.fontFamily,
+                        color: element.color,
+                        backgroundColor: element.backgroundColor || '#ffffff'
+                      }}
                     >
-                      ✕
-                    </button>
-                  </>
-                )}
-              </div>
-            ))}
+                      <div className="text-center p-2">
+                        {element.content || 'E = mc²'}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedElement === element.id && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteElement(element.id);
+                        }}
+                        className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 hover:bg-red-600 text-white text-lg font-medium transition-all duration-200 flex items-center justify-center z-10"
+                        title="Delete element"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

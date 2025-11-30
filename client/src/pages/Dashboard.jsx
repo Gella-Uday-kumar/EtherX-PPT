@@ -33,8 +33,11 @@ import ExportMenu from '../components/ExportMenu';
 import InteractiveElements from '../components/InteractiveElements';
 import MobileView from '../components/MobileView';
 import VersionHistory from '../components/VersionHistory';
+import ThesaurusModal from '../components/ThesaurusModal';
+import SpellCheckModal from '../components/SpellCheckModal';
 import { exportToJSON, exportPresentation, generateSamplePresentation } from '../utils/exportUtils';
 import { handleFileImport } from '../utils/importUtils';
+import { checkSpelling } from '../utils/spellCheck';
 
 // Custom print function to print all slides in PowerPoint-like handout layout (6 slides per page)
 const printSlide = async (slides, currentSlideIndex, presentationMeta, options = {}) => {
@@ -239,6 +242,11 @@ const Dashboard = () => {
   const [showShapeSelector, setShowShapeSelector] = useState(false);
   const [showIconSelector, setShowIconSelector] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [showThesaurusModal, setShowThesaurusModal] = useState(false);
+  const [thesaurusWord, setThesaurusWord] = useState('');
+  const [thesaurusSynonyms, setThesaurusSynonyms] = useState([]);
+  const [showSpellCheckModal, setShowSpellCheckModal] = useState(false);
+  const [misspelledWords, setMisspelledWords] = useState([]);
   const [showGridlines, setShowGridlines] = useState(true);
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -423,6 +431,16 @@ const Dashboard = () => {
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleSynonymSelect = (synonym) => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(synonym));
+      setShowThesaurusModal(false);
     }
   };
 
@@ -806,6 +824,59 @@ const Dashboard = () => {
                     <RiTextWrap className="w-6 h-6 mb-1" />
                     Text Box
                   </button>
+                  <button onMouseDown={(e) => {
+                    // Prevent selection clearing
+                    e.preventDefault();
+                    const selection = window.getSelection().toString().trim();
+                    if (selection) {
+                      const word = selection.toLowerCase();
+                      // Simple synonym dictionary
+                      const synonyms = {
+                        'presence': ['attendance', 'existence', 'being', 'company'],
+                        'happy': ['joyful', 'cheerful', 'content', 'pleased', 'delighted'],
+                        'background': ['backdrop', 'setting', 'context', 'history', 'foundation'],
+                        'dog': ['canine', 'puppy', 'hound', 'pet', 'animal'],
+                        'house': ['home', 'residence', 'dwelling', 'building', 'property'],
+                        'good': ['excellent', 'great', 'fine', 'superior', 'quality'],
+                        'bad': ['poor', 'terrible', 'awful', 'inferior', 'negative'],
+                        'big': ['large', 'huge', 'enormous', 'massive', 'substantial'],
+                        'small': ['tiny', 'little', 'miniature', 'compact', 'petite'],
+                        'fast': ['quick', 'rapid', 'swift', 'speedy', 'hasty'],
+                        'slow': ['gradual', 'leisurely', 'unhurried', 'delayed', 'sluggish'],
+                        'beautiful': ['gorgeous', 'lovely', 'attractive', 'stunning', 'elegant'],
+                        'ugly': ['unattractive', 'hideous', 'repulsive', 'unsightly', 'plain'],
+                        'smart': ['intelligent', 'clever', 'bright', 'wise', 'knowledgeable'],
+                        'stupid': ['dumb', 'foolish', 'silly', 'unintelligent', 'ignorant'],
+                        'important': ['significant', 'crucial', 'essential', 'vital', 'key'],
+                        'easy': ['simple', 'straightforward', 'effortless', 'uncomplicated', 'basic'],
+                        'hard': ['difficult', 'challenging', 'tough', 'complicated', 'demanding'],
+                        'new': ['fresh', 'recent', 'modern', 'current', 'novel'],
+                        'old': ['ancient', 'aged', 'vintage', 'antique', 'elderly'],
+                        'hot': ['warm', 'heated', 'fiery', 'scorching', 'tropical'],
+                        'cold': ['cool', 'chilly', 'freezing', 'icy', 'frigid'],
+                        'rich': ['wealthy', 'affluent', 'prosperous', 'well-off', 'opulent'],
+                        'poor': ['impoverished', 'needy', 'destitute', 'indigent', 'broke'],
+                        'strong': ['powerful', 'mighty', 'robust', 'sturdy', 'forceful'],
+                        'weak': ['feeble', 'fragile', 'delicate', 'frail', 'helpless'],
+                        'quick': ['fast', 'rapid', 'swift', 'speedy', 'prompt'],
+                        'slow': ['gradual', 'leisurely', 'unhurried', 'delayed', 'sluggish']
+                      };
+
+                      const wordSynonyms = synonyms[word];
+                      if (wordSynonyms) {
+                        setThesaurusWord(selection);
+                        setThesaurusSynonyms(wordSynonyms);
+                        setShowThesaurusModal(true);
+                      } else {
+                        alert(`No synonyms found for "${selection}". Try selecting a common word.`);
+                      }
+                    } else {
+                      alert('Select a word to find synonyms');
+                    }
+                  }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
+                    <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    Thesaurus
+                  </button>
                 </div>
                 <span className="text-xs text-gray-500">Drawing</span>
               </div>
@@ -1166,6 +1237,7 @@ const Dashboard = () => {
                 }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                   <RiPlayLine className="w-6 h-6 mb-1" />
                   Preview
+                  <span className="text-[10px] opacity-70">(ESC to close)</span>
                 </button>
                 <span className="text-xs text-gray-500">Preview</span>
               </div>
@@ -1225,19 +1297,37 @@ const Dashboard = () => {
               <div className="flex flex-col items-center">
                 <div className="flex items-center space-x-2">
                   <div className="flex flex-col items-center">
-                    <input type="number" min="0" max="5" step="0.1" defaultValue="0.5" className="w-16 text-xs p-1 border rounded" onChange={(e) => {
-                      const elements = slides[currentSlide]?.elements || [];
-                      const updatedElements = elements.map(el => ({...el, animationDuration: parseFloat(e.target.value)}));
-                      updateSlide(currentSlide, { elements: updatedElements });
-                    }} />
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={slides[currentSlide]?.animationDefaults?.duration || 0.5}
+                      className="w-16 text-xs p-1 border rounded"
+                      onChange={(e) => {
+                        const currentDefaults = slides[currentSlide]?.animationDefaults || {};
+                        updateSlide(currentSlide, {
+                          animationDefaults: { ...currentDefaults, duration: parseFloat(e.target.value) }
+                        });
+                      }}
+                    />
                     <span className="text-xs">Duration</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <input type="number" min="0" max="5" step="0.1" defaultValue="0" className="w-16 text-xs p-1 border rounded" onChange={(e) => {
-                      const elements = slides[currentSlide]?.elements || [];
-                      const updatedElements = elements.map(el => ({...el, animationDelay: parseFloat(e.target.value)}));
-                      updateSlide(currentSlide, { elements: updatedElements });
-                    }} />
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={slides[currentSlide]?.animationDefaults?.delay || 0}
+                      className="w-16 text-xs p-1 border rounded"
+                      onChange={(e) => {
+                        const currentDefaults = slides[currentSlide]?.animationDefaults || {};
+                        updateSlide(currentSlide, {
+                          animationDefaults: { ...currentDefaults, delay: parseFloat(e.target.value) }
+                        });
+                      }}
+                    />
                     <span className="text-xs">Delay</span>
                   </div>
                 </div>
@@ -1263,6 +1353,7 @@ const Dashboard = () => {
                 }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                   <RiPlayLine className="w-6 h-6 mb-1" />
                   Preview
+                  <span className="text-[10px] opacity-70">(ESC to close)</span>
                 </button>
                 <span className="text-xs text-gray-500">Preview</span>
               </div>
@@ -1343,30 +1434,20 @@ const Dashboard = () => {
                     const slide = slides[currentSlide];
                     if (!slide) return;
                     const allText = [slide.title, slide.content, slide.contentLeft, slide.contentRight, slide.compLeftContent, slide.compRightContent].filter(Boolean).join(' ');
-                    const words = allText.replace(/<[^>]*>/g, '').split(/\s+/).filter(w => w.length > 0);
-                    const misspelled = words.filter(w => w.length > 10 || /[0-9]/.test(w));
-                    alert(`Spell check: ${words.length} words checked, ${misspelled.length} potential issues found.`);
+                    const plainText = allText.replace(/<[^>]*>/g, '');
+                    const misspelled = checkSpelling(plainText);
+                    setMisspelledWords(misspelled);
+                    setShowSpellCheckModal(true);
                   }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                     <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     Spelling
                   </button>
-                  <button onClick={() => {
-                    const selection = window.getSelection().toString();
-                    if (selection) {
-                      alert(`Synonyms for "${selection}": similar, equivalent, comparable, related`);
-                    } else {
-                      alert('Select a word to find synonyms');
-                    }
-                  }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
-                    <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                    Thesaurus
-                  </button>
                 </div>
                 <span className="text-xs text-gray-500">Proofing</span>
               </div>
-              
+
               <div className="h-12 w-px bg-gray-300 dark:bg-gray-600"></div>
-              
+
               {/* Comments */}
               <div className="flex flex-col items-center">
                 <div className="flex items-center space-x-1">
@@ -1679,13 +1760,6 @@ const Dashboard = () => {
                   <div className="flex items-center gap-2"><RiEmotionLine className="w-4 h-4" /> Icon</div>
                 </DropdownItem>
                 <DropdownItem onSelect={() => {
-                  const el = { id: Date.now(), type: 'textbox', content: '<i>E = mc^2</i>', x: 180, y: 220, width: 180, height: 50, fontSize: 20, fontFamily: 'Times New Roman', color: '#111' };
-                  const elems = slides[currentSlide]?.elements || [];
-                  updateSlide(currentSlide, { elements: [...elems, el] });
-                }}>
-                  <div className="flex items-center gap-2"><RiSettings3Line className="w-4 h-4" /> Equation</div>
-                </DropdownItem>
-                <DropdownItem onSelect={() => {
                   const url = prompt('Video URL (mp4/webm):');
                   if (url) {
                     const el = { id: Date.now(), type: 'video', src: url, x: 200, y: 240, width: 360, height: 220 };
@@ -1766,7 +1840,7 @@ const Dashboard = () => {
               )}
               
               {authFlow !== 'signin' && (
-              <button 
+              <button
                 onClick={() => setShowPresenterMode(true)}
                 className="px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-all duration-200"
               >
@@ -1919,9 +1993,9 @@ const Dashboard = () => {
       {/* Slideshow removed */}
       
       {/* Presenter Mode */}
-      <PresenterMode 
-        isActive={showPresenterMode} 
-        onExit={() => setShowPresenterMode(false)} 
+      <PresenterMode
+        isActive={showPresenterMode}
+        onExit={() => setShowPresenterMode(false)}
       />
       
       {/* Presentation Management Modals */}
@@ -1953,7 +2027,7 @@ const Dashboard = () => {
       {/* Insert/Design Modals */}
       {showInsertChart && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="animate-zoom-in">
+          <div className="animate-zoomIn">
             <ChartComponent onClose={() => setShowInsertChart(false)} />
           </div>
         </div>
@@ -2226,6 +2300,39 @@ const Dashboard = () => {
 
       {/* Mobile View */}
       <MobileView />
+
+      {/* Thesaurus Modal */}
+      <ThesaurusModal
+        isOpen={showThesaurusModal}
+        onClose={() => setShowThesaurusModal(false)}
+        word={thesaurusWord}
+        synonyms={thesaurusSynonyms}
+        onSelectSynonym={handleSynonymSelect}
+      />
+
+      {/* Spell Check Modal */}
+      <SpellCheckModal
+        isOpen={showSpellCheckModal}
+        onClose={() => setShowSpellCheckModal(false)}
+        misspelledWords={misspelledWords}
+        onReplaceWord={(wrongWord, correctWord, position) => {
+          // Simple word replacement - in a real implementation, you'd need to track
+          // which text field the word came from and replace it there
+          const slide = slides[currentSlide];
+          if (!slide) return;
+
+          // For now, just replace in the content field as an example
+          const updatedContent = slide.content ? slide.content.replace(new RegExp(`\\b${wrongWord}\\b`, 'gi'), correctWord) : '';
+          updateSlide(currentSlide, { content: updatedContent });
+
+          // Remove the corrected word from the list
+          setMisspelledWords(prev => prev.filter(item => item.word !== wrongWord));
+        }}
+        onIgnoreWord={(word) => {
+          // Remove the ignored word from the list
+          setMisspelledWords(prev => prev.filter(item => item.word !== word));
+        }}
+      />
     </div>
   );
 };

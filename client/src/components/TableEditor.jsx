@@ -190,6 +190,7 @@ const TableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect, onCell
                   <td
                     key={colIndex}
                     contentEditable
+                    spellCheck={true}
                     suppressContentEditableWarning={true}
                     data-row={rowIndex}
                     data-col={colIndex}
@@ -260,13 +261,27 @@ const TableEditor = ({ element, onUpdate, onDelete, isSelected, onSelect, onCell
               title="Border Color"
             />
             {selectedCell && (
-              <input
-                type="color"
-                value={element.cellColors?.[`${selectedCell.row}-${selectedCell.col}`] || '#ffffff'}
-                onChange={(e) => handleCellBackgroundChange(e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer border border-gray-300"
-                title="Cell Background Color"
-              />
+              <>
+                <input
+                  type="color"
+                  value={element.cellColors?.[`${selectedCell.row}-${selectedCell.col}`] || '#ffffff'}
+                  onChange={(e) => handleCellBackgroundChange(e.target.value)}
+                  className="w-8 h-8 rounded cursor-pointer border border-gray-300"
+                  title="Cell Background Color"
+                />
+                <button
+                  onClick={() => {
+                    const newData = [...(element.data || [])];
+                    if (!newData[selectedCell.row]) newData[selectedCell.row] = [];
+                    newData[selectedCell.row][selectedCell.col] = '';
+                    onUpdate({ data: newData });
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                  title="Clear Cell Content"
+                >
+                  Clear
+                </button>
+              </>
             )}
           </div>
         </>
