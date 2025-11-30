@@ -306,6 +306,20 @@ export const PresentationProvider = ({ children }) => {
     return [];
   };
 
+  const renamePresentation = (newTitle) => {
+    setPresentationMeta({ ...presentationMeta, title: newTitle, updatedAt: new Date().toISOString() });
+    
+    // Update localStorage
+    const stored = JSON.parse(localStorage.getItem('presentation') || '{}');
+    stored.presentationMeta = { ...stored.presentationMeta, title: newTitle, updatedAt: new Date().toISOString() };
+    localStorage.setItem('presentation', JSON.stringify(stored));
+    
+    // Update user data if logged in
+    if (user?.id) {
+      saveCurrentPresentation();
+    }
+  };
+
   useEffect(() => {
     // initialize history on mount
     if (historyIndex === -1) {
@@ -366,7 +380,8 @@ export const PresentationProvider = ({ children }) => {
     addToFavorites,
     removeFromFavorites,
     getUserHistory,
-    getUserFavorites
+    getUserFavorites,
+    renamePresentation
   };
 
   return (

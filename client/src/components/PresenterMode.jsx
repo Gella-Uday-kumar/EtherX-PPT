@@ -201,6 +201,12 @@ const PresenterMode = ({ isActive, onExit }) => {
     if (!isActive) return;
 
     const handleKeyDown = (e) => {
+      // Prevent default behavior for presentation keys
+      if (['ArrowRight', 'ArrowLeft', ' ', 'Enter', 'Escape', 'Home', 'End'].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
       switch (e.key) {
         case 'Escape':
           handleExit();
@@ -233,22 +239,26 @@ const PresenterMode = ({ isActive, onExit }) => {
           break;
         case 't':
         case 'T':
+          e.preventDefault();
           setShowThumbnails(!showThumbnails);
           break;
         case 'b':
         case 'B':
+          e.preventDefault();
           setScreenMode(screenMode === 'black' ? 'normal' : 'black');
           break;
         case 'w':
         case 'W':
+          e.preventDefault();
           setScreenMode(screenMode === 'white' ? 'normal' : 'white');
           break;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, currentSlide, slides.length, setCurrentSlide, handleExit, showThumbnails]);
+    // Use capture phase to ensure we get events first
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [isActive, currentSlide, slides.length, setCurrentSlide, handleExit, showThumbnails, screenMode]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -647,8 +657,14 @@ const PresenterMode = ({ isActive, onExit }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => currentSlide > 0 && setCurrentSlide(currentSlide - 1)}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentSlide > 0) {
+                  setCurrentSlide(currentSlide - 1);
+                }
+              }}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors"
               disabled={currentSlide === 0}
             >
               ← Previous
@@ -657,8 +673,14 @@ const PresenterMode = ({ isActive, onExit }) => {
               {currentSlide + 1} of {slides.length}
             </span>
             <button
-              onClick={() => currentSlide < slides.length - 1 && setCurrentSlide(currentSlide + 1)}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentSlide < slides.length - 1) {
+                  setCurrentSlide(currentSlide + 1);
+                }
+              }}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors"
               disabled={currentSlide === slides.length - 1}
             >
               Next →
@@ -670,32 +692,52 @@ const PresenterMode = ({ isActive, onExit }) => {
               Time: {formatTime(elapsedTime)}
             </div>
             <button
-              onClick={() => setIsDrawing(!isDrawing)}
-              className={`px-3 py-1 rounded ${isDrawing ? 'bg-red-500' : 'bg-white/20 hover:bg-white/30'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDrawing(!isDrawing);
+              }}
+              className={`px-3 py-1 rounded transition-colors ${isDrawing ? 'bg-red-500 hover:bg-red-600' : 'bg-white/20 hover:bg-white/30'}`}
             >
               ✏️ {isDrawing ? 'Stop Drawing' : 'Draw'}
             </button>
             <button
-              onClick={() => setShowThumbnails(!showThumbnails)}
-              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowThumbnails(!showThumbnails);
+              }}
+              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded transition-colors"
             >
               📋 Thumbnails
             </button>
             <button
-              onClick={() => setScreenMode(screenMode === 'black' ? 'normal' : 'black')}
-              className={`px-3 py-1 rounded ${screenMode === 'black' ? 'bg-black text-white' : 'bg-white/20 hover:bg-white/30'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setScreenMode(screenMode === 'black' ? 'normal' : 'black');
+              }}
+              className={`px-3 py-1 rounded transition-colors ${screenMode === 'black' ? 'bg-black text-white' : 'bg-white/20 hover:bg-white/30'}`}
             >
               ⚫ Black
             </button>
             <button
-              onClick={() => setScreenMode(screenMode === 'white' ? 'normal' : 'white')}
-              className={`px-3 py-1 rounded ${screenMode === 'white' ? 'bg-white text-black' : 'bg-white/20 hover:bg-white/30'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setScreenMode(screenMode === 'white' ? 'normal' : 'white');
+              }}
+              className={`px-3 py-1 rounded transition-colors ${screenMode === 'white' ? 'bg-white text-black' : 'bg-white/20 hover:bg-white/30'}`}
             >
               ⚪ White
             </button>
             <button
-              onClick={handleExit}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleExit();
+              }}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition-colors"
             >
               Exit Presenter
             </button>
@@ -729,8 +771,12 @@ const PresenterMode = ({ isActive, onExit }) => {
             {slides.map((thumbSlide, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-full text-left p-2 rounded ${
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentSlide(index);
+                }}
+                className={`w-full text-left p-2 rounded transition-colors ${
                   index === currentSlide ? 'bg-blue-600' : 'bg-gray-800 hover:bg-gray-700'
                 }`}
               >

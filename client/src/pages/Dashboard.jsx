@@ -35,6 +35,7 @@ import MobileView from '../components/MobileView';
 import VersionHistory from '../components/VersionHistory';
 import ThesaurusModal from '../components/ThesaurusModal';
 import SpellCheckModal from '../components/SpellCheckModal';
+import RenameModal from '../components/RenameModal';
 import { exportToJSON, exportPresentation, generateSamplePresentation } from '../utils/exportUtils';
 import { handleFileImport } from '../utils/importUtils';
 import { checkSpelling } from '../utils/spellCheck';
@@ -218,7 +219,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-  const { slides, currentSlide, setSlides, setCurrentSlide, presentationMeta, setPresentationMeta, updateSlide } = usePresentation();
+  const { slides, currentSlide, setSlides, setCurrentSlide, presentationMeta, setPresentationMeta, updateSlide, renamePresentation } = usePresentation();
   const [activePanel, setActivePanel] = useState(null);
   const [authFlow, setAuthFlow] = useState(localStorage.getItem('authFlow') || 'login');
   const [isSlideshow, setIsSlideshow] = useState(false);
@@ -242,11 +243,13 @@ const Dashboard = () => {
   const [showShapeSelector, setShowShapeSelector] = useState(false);
   const [showIconSelector, setShowIconSelector] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [showSlideSorter, setShowSlideSorter] = useState(false);
   const [showThesaurusModal, setShowThesaurusModal] = useState(false);
   const [thesaurusWord, setThesaurusWord] = useState('');
   const [thesaurusSynonyms, setThesaurusSynonyms] = useState([]);
   const [showSpellCheckModal, setShowSpellCheckModal] = useState(false);
   const [misspelledWords, setMisspelledWords] = useState([]);
+  const [showRenameModal, setShowRenameModal] = useState(false);
   const [showGridlines, setShowGridlines] = useState(true);
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -485,6 +488,15 @@ const Dashboard = () => {
             <img src="/DOCS-LOGO-final-transparent.png" alt="EtherX Logo" className="w-10 h-10" />
             <button onClick={() => navigate('/')} className="text-sm font-medium hover:underline">EtherX PowerPoint</button>
             <span className="text-xs text-gray-500">- {presentationMeta.title || 'Untitled'}</span>
+            <button
+              onClick={() => setShowRenameModal(true)}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+              title="Rename presentation"
+            >
+              <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
           </div>
           <div className="flex items-center space-x-3">
             {/* Undo/Redo Buttons */}
@@ -533,7 +545,24 @@ const Dashboard = () => {
             <DropdownMenu
               label={
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium" style={{ backgroundColor: '#F0A500' }}>
+                  {user?.profilePhoto ? (
+                    <img 
+                      src={user.profilePhoto} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium" 
+                    style={{ 
+                      backgroundColor: '#F0A500',
+                      display: user?.profilePhoto ? 'none' : 'flex'
+                    }}
+                  >
                     {(user?.name || user?.email || 'User').charAt(0).toUpperCase()}
                   </div>
                   <div className="text-left">
@@ -546,7 +575,24 @@ const Dashboard = () => {
             >
               <div className="px-3 py-2 border-b" style={{ borderColor: 'rgba(240,165,0,0.08)' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-medium" style={{ backgroundColor: '#F0A500' }}>
+                  {user?.profilePhoto ? (
+                    <img 
+                      src={user.profilePhoto} 
+                      alt="Profile" 
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-medium" 
+                    style={{ 
+                      backgroundColor: '#F0A500',
+                      display: user?.profilePhoto ? 'none' : 'flex'
+                    }}
+                  >
                     {(user?.name || user?.email || 'User').charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -573,9 +619,33 @@ const Dashboard = () => {
               </div>
             </DropdownMenu>
             <div className="flex items-center space-x-2">
-              <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs">−</button>
-              <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs">□</button>
-              <button onClick={() => navigate('/')} className="p-1 hover:bg-red-500 hover:text-white rounded text-xs">×</button>
+              <button 
+                onClick={() => window.electronAPI?.minimize?.() || console.log('Minimize')}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs"
+                title="Minimize"
+              >
+                −
+              </button>
+              <button 
+                onClick={() => {
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                  } else {
+                    document.documentElement.requestFullscreen();
+                  }
+                }}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs"
+                title="Toggle Fullscreen"
+              >
+                □
+              </button>
+              <button 
+                onClick={() => navigate('/')}
+                className="p-1 hover:bg-red-500 hover:text-white rounded text-xs"
+                title="Close"
+              >
+                ×
+              </button>
             </div>
           </div>
         </div>
@@ -645,6 +715,18 @@ const Dashboard = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                     <span className="text-xs">Save</span>
+                  </button>
+                </div>
+
+                <div className="text-center">
+                  <button 
+                    onClick={() => setShowRenameModal(true)}
+                    className="flex flex-col items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                  >
+                    <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    <span className="text-xs">Rename</span>
                   </button>
                 </div>
 
@@ -1455,11 +1537,25 @@ const Dashboard = () => {
                     const comment = prompt('Add comment:');
                     if (comment) {
                       const comments = slides[currentSlide]?.comments || [];
-                      updateSlide(currentSlide, { comments: [...comments, {id: Date.now(), text: comment, author: user?.name || 'User'}] });
+                      const newComment = {id: Date.now(), text: comment, author: user?.name || 'User', timestamp: new Date().toISOString()};
+                      updateSlide(currentSlide, { comments: [...comments, newComment] });
+                      alert('Comment added successfully!');
                     }
                   }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                     <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     New Comment
+                  </button>
+                  <button onClick={() => {
+                    const comments = slides[currentSlide]?.comments || [];
+                    if (comments.length > 0) {
+                      const commentList = comments.map((c, i) => `${i+1}. ${c.author}: ${c.text}`).join('\n');
+                      alert(`Comments on this slide (${comments.length}):\n\n${commentList}`);
+                    } else {
+                      alert('No comments on this slide.');
+                    }
+                  }} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
+                    <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    View ({slides[currentSlide]?.comments?.length || 0})
                   </button>
                   <button onClick={() => {
                     const comments = slides[currentSlide]?.comments || [];
@@ -1490,7 +1586,7 @@ const Dashboard = () => {
                     <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
                     Normal
                   </button>
-                  <button onClick={() => setShowPresenterMode(true)} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
+                  <button onClick={() => setShowSlideSorter(true)} className="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xs">
                     <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                     Slide Sorter
                   </button>
@@ -2333,6 +2429,80 @@ const Dashboard = () => {
           setMisspelledWords(prev => prev.filter(item => item.word !== word));
         }}
       />
+
+      {/* Rename Modal */}
+      <RenameModal
+        isOpen={showRenameModal}
+        onClose={() => setShowRenameModal(false)}
+        currentName={presentationMeta.title || 'Untitled'}
+        onRename={renamePresentation}
+      />
+
+      {/* Slide Sorter Modal */}
+      {showSlideSorter && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-[90vw] h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Slide Sorter</h2>
+              <button onClick={() => setShowSlideSorter(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                ✕
+              </button>
+            </div>
+            <div className="p-4 h-full overflow-y-auto">
+              <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                {slides.map((slide, index) => (
+                  <div
+                    key={slide.id || index}
+                    className={`relative border-2 rounded-lg overflow-hidden transition-all group ${
+                      index === currentSlide
+                        ? 'border-blue-500 shadow-lg'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <div
+                      onClick={() => {
+                        setCurrentSlide(index);
+                        setShowSlideSorter(false);
+                      }}
+                      className="w-full h-24 flex flex-col justify-center items-center text-xs p-2 cursor-pointer"
+                      style={{ backgroundColor: slide.background || '#ffffff' }}
+                    >
+                      <div
+                        className="font-bold text-center mb-1 truncate w-full"
+                        style={{ color: slide.textColor || '#000000', fontSize: '8px' }}
+                      >
+                        {slide.title || `Slide ${index + 1}`}
+                      </div>
+                      <div
+                        className="text-center truncate w-full"
+                        style={{ color: slide.textColor || '#666666', fontSize: '6px' }}
+                      >
+                        {slide.content ? slide.content.replace(/<[^>]*>/g, '').substring(0, 30) + '...' : 'Content'}
+                      </div>
+                    </div>
+                    <div className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                      {index + 1}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newTitle = prompt('Rename slide:', slide.title || `Slide ${index + 1}`);
+                        if (newTitle && newTitle.trim()) {
+                          updateSlide(index, { title: newTitle.trim() });
+                        }
+                      }}
+                      className="absolute top-1 right-1 bg-blue-500 hover:bg-blue-600 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Rename slide"
+                    >
+                      ✏️
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

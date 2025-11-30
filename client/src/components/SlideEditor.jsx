@@ -7,6 +7,7 @@ import TableComponent from './TableComponent';
 import HeaderFooterModal from './HeaderFooterModal';
 import ImageEditor from './ImageEditor';
 import AdvancedTableEditor from './AdvancedTableEditor';
+import TextFormattingRibbon from './TextFormattingRibbon';
 
 const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, snapToGrid = false, zoomLevel = 100 }) => {
   const { slides, currentSlide, updateSlide, presentationMeta, setPresentationMeta, animationPreview, selectedAnimation } = usePresentation();
@@ -68,6 +69,18 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
     updateSlide(currentSlide, { elements: updatedElements }, skipHistory);
   };
 
+  const handleFormatChange = (formatOptions) => {
+    if (selectedElement) {
+      updateElement(selectedElement, formatOptions);
+    }
+  };
+
+  const applyFormatToSelection = (command, value = null) => {
+    if (document.getSelection().rangeCount > 0) {
+      document.execCommand(command, false, value);
+    }
+  };
+
   const deleteElement = (elementId) => {
     const elements = slide.elements || [];
     const filteredElements = elements.filter(el => el.id !== elementId);
@@ -77,23 +90,17 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
 
   return (
     <div
-      className="editor-wrapper h-[calc(100vh-80px)] overflow-y-scroll overflow-x-hidden p-6 bg-white dark:bg-black"
+      className="editor-wrapper h-[calc(100vh-80px)] overflow-y-scroll overflow-x-hidden bg-white dark:bg-black"
     >
-      {/* Toolbar */}
-      <div className="mb-6 panel">
-        <div className="p-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1 px-3 py-1 rounded-lg">
-              <button className="toolbar-btn" title="Bold">B</button>
-              <button className="toolbar-btn" title="Italic">I</button>
-              <button className="toolbar-btn" title="Underline">U</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Text Formatting Ribbon */}
+      <TextFormattingRibbon 
+        selectedElement={selectedElement}
+        onFormatChange={handleFormatChange}
+        applyFormatToSelection={applyFormatToSelection}
+      />
 
       {/* Slide Canvas */}
-      <div className="flex justify-center">
+      <div className="flex justify-center p-6">
         <div className="relative" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}>
           <div
             className="slide-canvas relative overflow-hidden"
@@ -104,20 +111,160 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
             }}
           >
             {/* Layout regions */}
+            {/* Layout regions - all editable */}
             {layoutType === 'title-content' && (
               <div>
                 <div
-                  className={`absolute top-12 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent ${getAnimationStyle('title').className}`}
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  className={`absolute top-12 left-12 right-12 text-4xl font-bold text-center outline-none min-h-[60px] p-4 rounded-xl transition-all duration-200 bg-transparent cursor-text ${getAnimationStyle('title').className}`}
                   style={{ color: slide.textColor || '#1f2937', ...getAnimationStyle('title').style }}
+                  onBlur={(e) => updateSlide(currentSlide, { title: e.target.textContent })}
+                  onFocus={(e) => {
+                    if (e.target.textContent === 'Click to add title') {
+                      e.target.textContent = '';
+                    }
+                  }}
                 >
                   {slide.title || 'Click to add title'}
                 </div>
                 <div
-                  className={`absolute top-32 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent ${getAnimationStyle('content').className}`}
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  className={`absolute top-32 left-12 right-12 bottom-12 text-lg outline-none p-6 rounded-xl transition-all duration-200 bg-transparent cursor-text ${getAnimationStyle('content').className}`}
                   style={{ color: slide.textColor || '#374151', ...getAnimationStyle('content').style }}
+                  onBlur={(e) => updateSlide(currentSlide, { content: e.target.textContent })}
+                  onFocus={(e) => {
+                    if (e.target.textContent === 'Click to add content') {
+                      e.target.textContent = '';
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const selection = window.getSelection();
+                      if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const container = range.startContainer;
+                        let currentElement = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                        
+                        // Check if we're in a list item
+                        while (currentElement && currentElement !== e.target && currentElement.tagName !== 'LI') {
+                          currentElement = currentElement.parentElement;
+                        }
+                        
+                        if (currentElement && currentElement.tagName === 'LI') {
+                          const parentList = currentElement.parentElement;
+                          if (parentList && (parentList.tagName === 'UL' || parentList.tagName === 'OL')) {
+                            const newLi = document.createElement('li');
+                            newLi.style.cssText = currentElement.style.cssText;
+                            newLi.innerHTML = '';
+                            
+                            parentList.insertBefore(newLi, currentElement.nextSibling);
+                            
+                            const newRange = document.createRange();
+                            newRange.setStart(newLi, 0);
+                            newRange.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(newRange);
+                            return;
+                          }
+                        }
+                        
+                        // Default enter behavior
+                        const br = document.createElement('br');
+                        range.insertNode(br);
+                        range.setStartAfter(br);
+                        range.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                      }
+                    }
+                  }}
                 >
                   {slide.content || 'Click to add content'}
                 </div>
+              </div>
+            )}
+
+            {layoutType === 'two-column' && (
+              <div>
+                <div
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  className="absolute top-12 left-12 right-12 text-3xl font-bold text-center outline-none min-h-[50px] p-3 cursor-text"
+                  style={{ color: slide.textColor || '#1f2937' }}
+                  onBlur={(e) => updateSlide(currentSlide, { title: e.target.textContent })}
+                  onFocus={(e) => {
+                    if (e.target.textContent === 'Click to add title') {
+                      e.target.textContent = '';
+                    }
+                  }}
+                >
+                  {slide.title || 'Click to add title'}
+                </div>
+                <div
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  className="absolute top-24 left-12 right-1/2 bottom-12 text-base outline-none p-4 cursor-text"
+                  style={{ color: slide.textColor || '#374151' }}
+                  onBlur={(e) => updateSlide(currentSlide, { leftContent: e.target.textContent })}
+                  onFocus={(e) => {
+                    if (e.target.textContent === 'Left column content') {
+                      e.target.textContent = '';
+                    }
+                  }}
+                >
+                  {slide.leftContent || 'Left column content'}
+                </div>
+                <div
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  className="absolute top-24 left-1/2 right-12 bottom-12 text-base outline-none p-4 cursor-text"
+                  style={{ color: slide.textColor || '#374151' }}
+                  onBlur={(e) => updateSlide(currentSlide, { rightContent: e.target.textContent })}
+                  onFocus={(e) => {
+                    if (e.target.textContent === 'Right column content') {
+                      e.target.textContent = '';
+                    }
+                  }}
+                >
+                  {slide.rightContent || 'Right column content'}
+                </div>
+              </div>
+            )}
+
+            {layoutType === 'title-only' && (
+              <div
+                contentEditable
+                suppressContentEditableWarning={true}
+                className="absolute top-1/2 left-12 right-12 text-5xl font-bold text-center outline-none min-h-[80px] p-6 cursor-text transform -translate-y-1/2"
+                style={{ color: slide.textColor || '#1f2937' }}
+                onBlur={(e) => updateSlide(currentSlide, { title: e.target.textContent })}
+                onFocus={(e) => {
+                  if (e.target.textContent === 'Click to add title') {
+                    e.target.textContent = '';
+                  }
+                }}
+              >
+                {slide.title || 'Click to add title'}
+              </div>
+            )}
+
+            {layoutType === 'blank' && (
+              <div
+                contentEditable
+                suppressContentEditableWarning={true}
+                className="absolute top-12 left-12 right-12 bottom-12 text-lg outline-none p-6 cursor-text"
+                style={{ color: slide.textColor || '#374151' }}
+                onBlur={(e) => updateSlide(currentSlide, { content: e.target.textContent })}
+                onFocus={(e) => {
+                  if (e.target.textContent === 'Click to add content') {
+                    e.target.textContent = '';
+                  }
+                }}
+              >
+                {slide.content || 'Click to add content'}
               </div>
             )}
 
@@ -165,6 +312,42 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                       dangerouslySetInnerHTML={{ __html: element.content }}
                       onBlur={(e) => updateElement(element.id, { content: e.target.innerHTML })}
                       onKeyDown={(e) => {
+                        // Handle Enter key for list continuation
+                        if (e.key === 'Enter') {
+                          const selection = window.getSelection();
+                          if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            const text = e.target.textContent;
+                            const cursorPos = range.startOffset;
+                            const beforeCursor = text.substring(0, cursorPos);
+                            const lastLine = beforeCursor.split('\n').pop();
+                            
+                            // Check if current line has list formatting
+                            const bulletMatch = lastLine.match(/^(\u2022|\d+\.|[A-Z]\.|\u2605|\u2192)\s/);
+                            if (bulletMatch) {
+                              e.preventDefault();
+                              const prefix = bulletMatch[1];
+                              let nextPrefix = prefix;
+                              
+                              // Generate next list item
+                              if (/\d+\./.test(prefix)) {
+                                const num = parseInt(prefix) + 1;
+                                nextPrefix = `${num}.`;
+                              } else if (/[A-Z]\./.test(prefix)) {
+                                const char = String.fromCharCode(prefix.charCodeAt(0) + 1);
+                                nextPrefix = `${char}.`;
+                              }
+                              
+                              const newText = `\n${nextPrefix} `;
+                              range.deleteContents();
+                              range.insertNode(document.createTextNode(newText));
+                              range.collapse(false);
+                              selection.removeAllRanges();
+                              selection.addRange(range);
+                            }
+                          }
+                        }
+                        
                         // Prevent canvas shortcuts but allow typing and common editing shortcuts
                         if (e.ctrlKey || e.metaKey) {
                           if (!['a', 'c', 'v', 'x', 'z', 'y', 'b', 'i', 'u'].includes(e.key.toLowerCase())) {
@@ -202,6 +385,41 @@ const SlideEditor = ({ onTableSelect, onTableCellSelect, showGridlines = true, s
                       <div className="text-center p-2">
                         {element.content || 'E = mc²'}
                       </div>
+                    </div>
+                  )}
+
+                  {element.type === 'chart' && (
+                    <ChartRenderer
+                      key={element.id}
+                      element={element}
+                    />
+                  )}
+
+                  {element.type === 'table' && (
+                    <div className="w-full h-full border border-gray-300">
+                      <table className="w-full h-full border-collapse">
+                        <tbody>
+                          {element.data?.map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                              {row.map((cell, colIndex) => (
+                                <td
+                                  key={colIndex}
+                                  className="border border-gray-300 p-1 text-sm"
+                                  contentEditable
+                                  suppressContentEditableWarning={true}
+                                  onBlur={(e) => {
+                                    const newData = [...element.data];
+                                    newData[rowIndex][colIndex] = e.target.textContent;
+                                    updateElement(element.id, { data: newData });
+                                  }}
+                                >
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
 

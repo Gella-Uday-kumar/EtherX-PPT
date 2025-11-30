@@ -16,19 +16,33 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('userData');
     if (token) {
-      setUser({ token });
+      try {
+        const parsedUserData = userData ? JSON.parse(userData) : {};
+        setUser({ token, ...parsedUserData });
+      } catch (error) {
+        setUser({ token });
+      }
     }
     setLoading(false);
   }, []);
 
   const login = (userData) => {
     localStorage.setItem('token', userData.token);
+    localStorage.setItem('userData', JSON.stringify(userData));
     setUser(userData);
+  };
+
+  const updateUser = (updatedData) => {
+    const newUserData = { ...user, ...updatedData };
+    localStorage.setItem('userData', JSON.stringify(newUserData));
+    setUser(newUserData);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     setUser(null);
   };
 
@@ -36,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateUser,
     loading
   };
 

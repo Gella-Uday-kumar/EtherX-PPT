@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import RenameModal from '../components/RenameModal';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const Home = () => {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [recentFiles, setRecentFiles] = useState([]);
   const [pinnedFiles, setPinnedFiles] = useState([]);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const templates = {
     1: { id: 1, name: 'Blank Presentation', category: 'Basic', description: 'Start with a blank presentation', slides: [{ id: 1, title: 'Click to add title', content: 'Click to add content', background: '#ffffff', textColor: '#000000', layout: 'title-content', elements: [] }] },
@@ -121,6 +124,31 @@ const Home = () => {
       const recent = recentFiles.filter(f => f.id !== fileId);
       localStorage.setItem('recentFiles', JSON.stringify(recent));
       setRecentFiles(recent);
+    }
+  };
+
+  const handleRenameFile = (fileId) => {
+    const file = recentFiles.find(f => f.id === fileId);
+    if (file) {
+      setSelectedFile(file);
+      setShowRenameModal(true);
+    }
+  };
+
+  const handleFileRenamed = (newName) => {
+    if (selectedFile) {
+      const updatedFiles = recentFiles.map(f => 
+        f.id === selectedFile.id ? { ...f, name: newName } : f
+      );
+      setRecentFiles(updatedFiles);
+      localStorage.setItem('recentFiles', JSON.stringify(updatedFiles));
+      
+      // Also update pinned files if this file is pinned
+      const updatedPinned = pinnedFiles.map(f => 
+        f.id === selectedFile.id ? { ...f, name: newName } : f
+      );
+      setPinnedFiles(updatedPinned);
+      localStorage.setItem('pinnedFiles', JSON.stringify(updatedPinned));
     }
   };
 
@@ -325,6 +353,16 @@ const Home = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        handleRenameFile(file.id);
+                      }}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      title="Rename"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handlePinFile(file.id);
                       }}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
@@ -398,6 +436,14 @@ const Home = () => {
         )}
       </div>
       
+      {/* Rename Modal */}
+      <RenameModal
+        isOpen={showRenameModal}
+        onClose={() => setShowRenameModal(false)}
+        currentName={selectedFile?.name || ''}
+        onRename={handleFileRenamed}
+      />
+
       {/* Click outside to close account menu */}
       {showAccountMenu && (
         <div 
