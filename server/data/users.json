@@ -3,7 +3,7 @@
     "id": "1763957386024",
     "name": "uday kumar",
     "email": "gellaudaykumar2329@gmail.com",
-    "password": "$2a$10$QOrFUQK05VzuDFI8E3pdMeuUXcqHo97qK9MbPINv0x54Fd4ytTrnW",
+    "password": "$2a$10$MBmBeeZFA3NdyCHBK7MgUew0wzLyGlCEDxGXDbSD0VlmahpQmWXqi",
     "createdAt": "2025-11-24T04:09:46.024Z",
     "isVerified": false
   },
@@ -29,6 +29,22 @@
     "email": "anushriks73@gmail.com",
     "password": "$2a$10$.42u5kiEcJMxY5OQBipyoeeDajy47VLsVDIVME/VJWYPGcH0QcqpK",
     "createdAt": "2025-11-25T12:02:57.459Z",
+    "isVerified": false
+  },
+  {
+    "id": "1764509307355",
+    "name": "akruti singh",
+    "email": "akrutinainasingh@gmail.com",
+    "password": "$2a$10$aqLlLt6MMoy2o9imGI28..3ekoYfbeNd5g79P8R1fxgQESn4X6TeO",
+    "createdAt": "2025-11-30T13:28:27.355Z",
+    "isVerified": false
+  },
+  {
+    "id": "1764510774737",
+    "name": "akeuti  singh",
+    "email": "anrudkumar901@gmail.com",
+    "password": "$2a$10$hsp.JTNwZt5w/7RyVYhLGuKUJn/RDs0QnXUB0Tf9nhGXHHeJYCGDu",
+    "createdAt": "2025-11-30T13:52:54.737Z",
     "isVerified": false
   }
 ]

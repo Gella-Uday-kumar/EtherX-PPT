@@ -35,7 +35,9 @@ const Signup = () => {
         password: formData.password
       });
       
-      if (response.data.token) {
+      if (response.data.requiresVerification) {
+        navigate('/verify-email', { state: { email: formData.email } });
+      } else if (response.data.token) {
         login({
           token: response.data.token,
           email: response.data.user.email,

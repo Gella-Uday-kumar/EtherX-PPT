@@ -5,6 +5,8 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 
 router.post('/register', register);
+router.post('/verify-email', verifyOTP);
+router.post('/resend-verification', forgotPassword);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
 router.post('/verify-otp', verifyOTP);

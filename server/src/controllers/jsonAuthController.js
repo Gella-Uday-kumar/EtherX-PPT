@@ -27,17 +27,21 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    const user = await jsonDb.createUser({ name, email, password });
-    const token = generateToken(user.id);
+    const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    
+    otpStorage.set(email, { otp, expiresAt, userData: { name, email, password } });
 
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
+    try {
+      await emailService.sendVerificationOTP(email, otp, name);
+    } catch (error) {
+      console.log(`🔑 Verification OTP for ${email}: ${otp}`);
+    }
+
+    res.status(200).json({
+      message: 'Verification OTP sent to your email',
+      email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+      requiresVerification: true
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -105,11 +109,12 @@ export const forgotPassword = async (req, res) => {
     console.log(`🔑 OTP for ${email}: ${otp}`);
 
     // Send OTP via email
-    const emailResult = await emailService.sendOTP(email, otp, user.name);
-    
-    if (!emailResult.success) {
-      console.error('Email sending failed:', emailResult.error);
-      return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    try {
+      const emailResult = await emailService.sendOTP(email, otp, user.name);
+      console.log('✅ OTP sent to email successfully');
+    } catch (error) {
+      console.log(`🔑 OTP for ${email}: ${otp}`);
+      console.log('⚠️ Email failed, OTP shown in console');
     }
 
     res.json({
@@ -143,6 +148,24 @@ export const verifyOTP = async (req, res) => {
 
     if (storedData.otp !== otp) {
       return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    // If userData exists, complete registration
+    if (storedData.userData) {
+      const user = await jsonDb.createUser(storedData.userData);
+      const token = generateToken(user.id);
+      otpStorage.delete(email);
+      
+      return res.json({
+        message: 'Email verified and account created successfully',
+        verified: true,
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        }
+      });
     }
 
     res.json({

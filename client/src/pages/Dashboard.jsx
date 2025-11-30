@@ -416,11 +416,16 @@ const Dashboard = () => {
     }
   };
 
-  const handleSavePresentation = () => {
+  const handleSavePresentation = async () => {
     const name = prompt('Save As filename (without extension):', presentationMeta.title || 'presentation')?.trim();
     if (name) {
-      exportToJSON(slides, `${name}.json`);
-      setPresentationMeta({ ...presentationMeta, title: name, updatedAt: new Date().toISOString() });
+      try {
+        await exportPresentation(slides, 'pdf', name);
+        setPresentationMeta({ ...presentationMeta, title: name, updatedAt: new Date().toISOString() });
+      } catch (error) {
+        console.error('Save failed:', error);
+        alert('Failed to save presentation');
+      }
     }
   };
 
@@ -940,8 +945,7 @@ const Dashboard = () => {
                         'poor': ['impoverished', 'needy', 'destitute', 'indigent', 'broke'],
                         'strong': ['powerful', 'mighty', 'robust', 'sturdy', 'forceful'],
                         'weak': ['feeble', 'fragile', 'delicate', 'frail', 'helpless'],
-                        'quick': ['fast', 'rapid', 'swift', 'speedy', 'prompt'],
-                        'slow': ['gradual', 'leisurely', 'unhurried', 'delayed', 'sluggish']
+                        'quick': ['fast', 'rapid', 'swift', 'speedy', 'prompt']
                       };
 
                       const wordSynonyms = synonyms[word];

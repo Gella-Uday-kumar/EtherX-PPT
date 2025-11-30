@@ -331,6 +331,21 @@ export const PresentationProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Load user-specific presentation when user logs in
+    if (user?.id) {
+      const userPresentation = userDataService.loadPresentation(user.id);
+      if (userPresentation) {
+        setSlides(userPresentation.slides || getInitialSlides());
+        setPresentationMeta(userPresentation.presentationMeta || getInitialMeta());
+      }
+    } else {
+      // Reset to default when user logs out
+      setSlides(getInitialSlides());
+      setPresentationMeta(getInitialMeta());
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
     const interval = setInterval(async () => {
       // Save to localStorage
       localStorage.setItem('presentation', JSON.stringify({ slides, presentationMeta }));

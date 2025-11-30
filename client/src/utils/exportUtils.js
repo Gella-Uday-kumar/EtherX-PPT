@@ -553,13 +553,19 @@ const exportToPowerPoint = async (slides, filename) => {
 
 const exportToPDF = async (slides, filename) => {
   try {
-    console.log('Starting PDF export...');
+    console.log('Starting PDF export with', slides.length, 'slides');
+    
+    if (!slides || slides.length === 0) {
+      throw new Error('No slides to export');
+    }
 
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'in',
       format: 'a4'
     });
+    
+    console.log('PDF document created');
 
     // Load logo
     let logoImg = null;
@@ -799,19 +805,56 @@ const exportToPDF = async (slides, filename) => {
 
   } catch (error) {
     console.error('PDF export failed:', error);
-    // Fallback to JSON export
-    const data = JSON.stringify({ slides, format: 'pdf', error: error.message });
-    downloadFile(data, `${filename}.pdf`, 'application/pdf');
-    console.log('PDF export failed, falling back to JSON');
-    throw error; // Re-throw to trigger proper error handling
+    alert('PDF export failed: ' + error.message + '. Please check console for details.');
+    throw error;
   }
 };
 
 const exportToODP = async (slides, filename) => {
-  // OpenDocument Presentation format
-  const data = JSON.stringify({ slides, format: 'odp' });
-  downloadFile(data, `${filename}.odp`, 'application/vnd.oasis.opendocument.presentation');
-  console.log('ODP export completed');
+  try {
+    // Create ODP XML structure
+    let odpContent = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" 
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" 
+  xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" 
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" 
+  xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" 
+  office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.presentation">
+  <office:body>
+    <office:presentation>`;
+
+    slides.forEach((slide, index) => {
+      odpContent += `
+      <draw:page draw:name="Slide${index + 1}" draw:style-name="dp1">
+        <draw:frame draw:style-name="gr1" draw:text-style-name="P1" 
+          draw:layer="layout" svg:width="25cm" svg:height="3cm" 
+          svg:x="2cm" svg:y="2cm">
+          <draw:text-box>
+            <text:p text:style-name="P1">${(slide.title || '').replace(/[<>&]/g, '')}</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame draw:style-name="gr2" draw:text-style-name="P2" 
+          draw:layer="layout" svg:width="25cm" svg:height="12cm" 
+          svg:x="2cm" svg:y="6cm">
+          <draw:text-box>
+            <text:p text:style-name="P2">${(slide.content || '').replace(/<[^>]*>/g, '').replace(/[<>&]/g, '')}</text:p>
+          </draw:text-box>
+        </draw:frame>
+      </draw:page>`;
+    });
+
+    odpContent += `
+    </office:presentation>
+  </office:body>
+</office:document>`;
+
+    downloadFile(odpContent, `${filename}.odp`, 'application/vnd.oasis.opendocument.presentation');
+    console.log('ODP export completed');
+  } catch (error) {
+    console.error('ODP export failed:', error);
+    throw error;
+  }
 };
 
 const exportToWord = async (slides, filename) => {

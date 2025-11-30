@@ -36,6 +36,10 @@ class IPFSService {
   }
 
   async uploadJSON(jsonData) {
+    if (!this.apiKey || !this.secret) {
+      throw new Error('IPFS credentials not configured. Please set IPFS_API_KEY and IPFS_SECRET in .env file');
+    }
+
     const response = await fetch(`${this.baseURL}/pinning/pinJSONToIPFS`, {
       method: 'POST',
       headers: {

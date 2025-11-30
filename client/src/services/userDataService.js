@@ -59,6 +59,22 @@ class UserDataService {
     localStorage.setItem(key, JSON.stringify(updated));
     return updated;
   }
+
+  savePresentation(userId, presentationData) {
+    const key = this.getUserKey(userId, 'current_presentation');
+    localStorage.setItem(key, JSON.stringify(presentationData));
+    this.saveToHistory(userId, presentationData);
+  }
+
+  loadPresentation(userId) {
+    const key = this.getUserKey(userId, 'current_presentation');
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  getUserPresentations(userId) {
+    return this.getHistory(userId);
+  }
 }
 
 export default new UserDataService();
